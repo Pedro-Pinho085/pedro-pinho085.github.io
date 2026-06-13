@@ -1,0 +1,3098 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0E5E45">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PinhoPDV">
+<title>PinhoPDV · Ponto de venda</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230E5E45'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='monospace'>R$</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230E5E45'/><text x='90' y='122' font-size='94' text-anchor='middle' fill='white' font-family='monospace'>R$</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PINHOPDV — Sistema de ponto de venda
+   Paleta: verde-cédula sobre papel de cupom
+   ============================================================ */
+:root{
+  --ink:#14201B;            /* tinta verde-escura (sidebar) */
+  --ink-2:#1D2E26;
+  --brand:#0E5E45;          /* verde cédula */
+  --brand-bright:#17A673;   /* ações de dinheiro/confirmar */
+  --brand-soft:#E3F2EB;
+  --brand-rgb:14,94,69;     /* p/ sombras e transparências do tema */
+  --bright-rgb:23,166,115;
+  --accent-tint:#7FE0BC;    /* texto claro sobre fundos escuros (visor) */
+  --accent-glow:#2FD895;    /* ponto luminoso "caixa aberto" */
+  --paper:#F4F3EC;          /* papel de cupom */
+  --surface:#FFFFFF;
+  --line:#E2E0D6;
+  --txt:#22302A;
+  --txt-soft:#6B7A72;
+  --warm:#E8A33D;           /* avisos / estoque baixo */
+  --warm-soft:#FBF1DD;
+  --danger:#C84B3C;
+  --danger-soft:#F9E8E5;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --disp:'Space Grotesk',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --body:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --rad:12px;
+  --shadow:0 1px 2px rgba(20,32,27,.06),0 4px 14px rgba(20,32,27,.07);
+  --shadow-lg:0 10px 40px rgba(20,32,27,.18);
+  --sidebar-w:218px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:var(--body);background:var(--paper);color:var(--txt);min-height:100vh;overflow-x:hidden;overscroll-behavior-y:contain}
+button,input,select,textarea,a,label{touch-action:manipulation}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:1rem;color:var(--txt)}
+::placeholder{color:#A8B3AC}
+:focus-visible{outline:3px solid rgba(var(--bright-rgb),.45);outline-offset:1px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* todo valor em dinheiro do sistema usa mono — assinatura visual do cupom */
+.money{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+h1,h2,h3{font-family:var(--disp);color:var(--ink);letter-spacing:-.01em}
+
+/* ---------- LOGIN ---------- */
+#loginScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:
+  radial-gradient(1200px 600px at 80% -10%,rgba(var(--bright-rgb),.25),transparent 60%),
+  radial-gradient(900px 500px at -10% 110%,rgba(232,163,61,.14),transparent 55%),
+  var(--ink);z-index:200;padding:20px}
+.login-card{width:100%;max-width:400px;background:var(--surface);border-radius:18px;box-shadow:var(--shadow-lg);overflow:hidden;animation:rise .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+.login-head{background:var(--brand);color:#fff;padding:26px 28px 22px;position:relative}
+.login-head::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:10px;
+  background:linear-gradient(-45deg,var(--brand) 6px,transparent 0),linear-gradient(45deg,var(--brand) 6px,transparent 0);
+  background-size:14px 10px;background-repeat:repeat-x}
+.brand-mark{display:flex;align-items:center;gap:12px}
+.brand-mark .sq{width:44px;height:44px;border-radius:11px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:1.05rem;border:1.5px solid rgba(255,255,255,.35)}
+.brand-mark h1{color:#fff;font-size:1.3rem;line-height:1.15}
+.brand-mark small{display:block;font-family:var(--mono);font-size:.68rem;font-weight:400;opacity:.75;letter-spacing:.14em;text-transform:uppercase}
+.login-body{padding:30px 28px 26px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--txt-soft);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.inp{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:10px;background:#FCFBF7;font-size:1rem;transition:border-color .15s}
+.inp:focus{border-color:var(--brand-bright);outline:none;background:#fff}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:10px;font-weight:600;font-size:.95rem;transition:transform .08s,box-shadow .15s,background .15s;user-select:none}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(var(--brand-rgb),.3)}
+.btn-primary:hover{background:#0C5039}
+.btn-money{background:var(--brand-bright);color:#fff;box-shadow:0 2px 10px rgba(var(--bright-rgb),.35)}
+.btn-money:hover{background:#13955F}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--txt)}
+.btn-ghost:hover{border-color:var(--brand-bright);color:var(--brand)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#B23E30}
+.btn-warm{background:var(--warm);color:#3C2A07}
+.btn-block{width:100%}
+.btn-sm{padding:8px 13px;font-size:.85rem;border-radius:8px}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none!important}
+.login-hint{margin-top:16px;font-size:.78rem;color:var(--txt-soft);text-align:center;background:var(--brand-soft);border-radius:8px;padding:10px;line-height:1.5}
+.login-hint code{font-family:var(--mono);background:#fff;padding:1px 6px;border-radius:4px;color:var(--brand);font-size:.75rem}
+
+/* ---------- APP SHELL ---------- */
+#app{display:none;min-height:100vh}
+#app.on{display:block}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--ink);color:#D8E2DC;display:flex;flex-direction:column;z-index:60}
+.sb-head{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-head .brand-mark .sq{width:38px;height:38px;font-size:.92rem;background:rgba(var(--bright-rgb),.18);border-color:rgba(var(--bright-rgb),.5);color:var(--accent-tint)}
+.sb-head h1{font-size:1.02rem;color:#fff}
+.sb-head small{color:#8FA89B}
+.sb-nav{flex:1;padding:12px 10px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:11px 13px;border-radius:9px;color:#AFC3B8;font-size:.92rem;font-weight:500;margin-bottom:3px;transition:background .12s,color .12s;text-align:left}
+.nav-item svg{width:19px;height:19px;flex-shrink:0}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.on{background:var(--brand-bright);color:#fff;box-shadow:0 2px 10px rgba(var(--bright-rgb),.35)}
+.nav-item .kbd{margin-left:auto}
+.kbd{font-family:var(--mono);font-size:.62rem;border:1px solid rgba(255,255,255,.22);border-radius:4px;padding:1px 5px;opacity:.6}
+.sb-foot{padding:14px;border-top:1px solid rgba(255,255,255,.07)}
+.sb-user{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--brand-bright);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+.sb-user .nm{font-size:.85rem;font-weight:600;color:#fff;line-height:1.2}
+.sb-user .rl{font-size:.68rem;color:#8FA89B;text-transform:uppercase;letter-spacing:.08em}
+.cash-pill{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:600;padding:6px 10px;border-radius:99px;margin-bottom:10px}
+.cash-pill .dot{width:8px;height:8px;border-radius:50%}
+.cash-pill.open{background:rgba(var(--bright-rgb),.16);color:var(--accent-tint)}
+.cash-pill.open .dot{background:var(--accent-glow);box-shadow:0 0 8px var(--accent-glow)}
+.cash-pill.closed{background:rgba(200,75,60,.16);color:#F0A99F}
+.cash-pill.closed .dot{background:#E06A5A}
+.main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column}
+.screen{display:none;flex:1;padding:26px 30px 40px;animation:fadeIn .22s ease}
+.screen.on{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.screen-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.screen-head h2{font-size:1.5rem}
+.screen-head p{color:var(--txt-soft);font-size:.88rem;margin-top:3px}
+.head-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---------- CARDS / TABELAS ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--rad);box-shadow:var(--shadow)}
+.card-pad{padding:20px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--rad);padding:16px 18px;box-shadow:var(--shadow)}
+.stat .lb{font-size:.72rem;font-weight:700;color:var(--txt-soft);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:6px}
+.stat .vl{font-family:var(--mono);font-size:1.45rem;font-weight:600;color:var(--ink);margin-top:6px;letter-spacing:-.02em}
+.stat .vl.pos{color:var(--brand)}
+.stat .vl.warn{color:#B07A1E}
+.stat .vl.neg{color:var(--danger)}
+.stat .sub{font-size:.74rem;color:var(--txt-soft);margin-top:3px}
+.tbl-wrap{overflow-x:auto;border-radius:var(--rad)}
+table{width:100%;border-collapse:collapse;background:var(--surface);font-size:.9rem}
+th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--txt-soft);font-weight:700;padding:12px 14px;border-bottom:1.5px solid var(--line);background:#FAFAF5;white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid #EFEEE6;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .1s}
+tbody tr:hover{background:#FAFAF4}
+.t-r{text-align:right}.t-c{text-align:center}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.chip-ok{background:var(--brand-soft);color:var(--brand)}
+.chip-warn{background:var(--warm-soft);color:#9A6A12}
+.chip-bad{background:var(--danger-soft);color:var(--danger)}
+.chip-gray{background:#EEEEE7;color:var(--txt-soft)}
+.icon-btn{width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--txt-soft);transition:background .12s,color .12s}
+.icon-btn:hover{background:var(--brand-soft);color:var(--brand)}
+.icon-btn.del:hover{background:var(--danger-soft);color:var(--danger)}
+.icon-btn svg{width:17px;height:17px}
+.empty{padding:54px 20px;text-align:center;color:var(--txt-soft)}
+.empty .big{font-size:2.2rem;margin-bottom:10px}
+.empty p{margin-bottom:16px;font-size:.92rem}
+.search-bar{position:relative;flex:1;min-width:200px}
+.search-bar svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--txt-soft);pointer-events:none}
+.search-bar .inp{padding-left:40px}
+
+/* ---------- PDV (frente de caixa) ---------- */
+#screen-pdv{padding:0;display:none}
+#screen-pdv.on{display:flex}
+.pdv-wrap{display:flex;flex:1;min-height:100vh}
+.pdv-left{flex:1;display:flex;flex-direction:column;padding:22px 24px;min-width:0}
+.pdv-search-row{display:flex;gap:10px;margin-bottom:16px}
+.pdv-search{position:relative;flex:1}
+.pdv-search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:19px;height:19px;color:var(--txt-soft)}
+.pdv-search input{width:100%;padding:15px 15px 15px 46px;border:2px solid var(--line);border-radius:12px;font-size:1.05rem;background:var(--surface);box-shadow:var(--shadow);transition:border-color .15s}
+.pdv-search input:focus{border-color:var(--brand-bright);outline:none}
+.pdv-hint{font-size:.72rem;color:var(--txt-soft);margin:-8px 0 14px 4px;font-family:var(--mono)}
+.cat-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:8px;scrollbar-width:thin}
+.cat-pill{flex-shrink:0;padding:7px 15px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);font-size:.82rem;font-weight:600;color:var(--txt-soft);transition:all .12s}
+.cat-pill.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px;overflow-y:auto;flex:1;align-content:start;padding-bottom:90px}
+.prod-tile{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:104px;transition:border-color .12s,transform .08s,box-shadow .12s;position:relative;overflow:hidden}
+.prod-tile:hover{border-color:var(--brand-bright);box-shadow:var(--shadow)}
+.prod-tile:active{transform:scale(.96)}
+.prod-tile .nm{font-size:.84rem;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prod-tile .pr{font-family:var(--mono);font-weight:600;color:var(--brand);font-size:.95rem;margin-top:auto}
+.prod-tile .st{font-size:.68rem;color:var(--txt-soft);font-family:var(--mono)}
+.prod-tile.low .st{color:#B07A1E;font-weight:600}
+.prod-tile.out{opacity:.55}
+.prod-tile.out::after{content:"SEM ESTOQUE";position:absolute;top:8px;right:-26px;background:var(--danger);color:#fff;font-size:.55rem;font-weight:700;padding:2px 28px;transform:rotate(38deg)}
+
+/* ticket / carrinho */
+.pdv-right{width:400px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--line);display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(20,32,27,.05)}
+.ticket-head{padding:16px 20px;border-bottom:1.5px dashed var(--line);display:flex;justify-content:space-between;align-items:center}
+.ticket-head h3{font-size:.95rem;display:flex;align-items:center;gap:8px}
+.ticket-head .cnt{font-family:var(--mono);font-size:.72rem;background:var(--brand-soft);color:var(--brand);padding:2px 8px;border-radius:99px;font-weight:600}
+.ticket-cust{padding:10px 20px;border-bottom:1px solid #EFEEE6;display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--txt-soft)}
+.ticket-cust button{font-size:.8rem;font-weight:600;color:var(--brand);display:flex;align-items:center;gap:5px}
+.ticket-cust button:hover{text-decoration:underline}
+.ticket-items{flex:1;overflow-y:auto;padding:6px 0}
+.ti{display:flex;align-items:center;gap:10px;padding:10px 16px 10px 20px;border-bottom:1px solid #F3F2EA;animation:fadeIn .18s}
+.ti .info{flex:1;min-width:0}
+.ti .nm{font-size:.86rem;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ti .un{font-size:.7rem;color:var(--txt-soft);font-family:var(--mono)}
+.qty-ctl{display:flex;align-items:center;gap:2px;background:#F4F3EC;border-radius:8px;padding:2px}
+.qty-ctl button{width:26px;height:26px;border-radius:6px;font-weight:700;font-size:1rem;color:var(--brand);display:flex;align-items:center;justify-content:center}
+.qty-ctl button:hover{background:#fff}
+.qty-ctl .q{font-family:var(--mono);font-size:.85rem;font-weight:600;min-width:26px;text-align:center}
+.ti .tot{font-family:var(--mono);font-size:.86rem;font-weight:600;width:74px;text-align:right}
+.ti .rm{color:#C9C6B8;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ti .rm:hover{color:var(--danger);background:var(--danger-soft)}
+.ticket-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#B9B6A8;gap:10px;padding:20px;text-align:center}
+.ticket-empty svg{width:44px;height:44px;opacity:.5}
+.ticket-empty p{font-size:.85rem}
+
+/* visor do caixa — assinatura do design */
+.ticket-totals{border-top:1.5px dashed var(--line);padding:14px 20px 10px;font-size:.85rem}
+.tt-row{display:flex;justify-content:space-between;margin-bottom:6px;color:var(--txt-soft)}
+.tt-row .money{color:var(--txt)}
+.tt-row.disc{color:#B07A1E}
+.tt-row.disc .money{color:#B07A1E}
+.tt-row.disc button{font-size:.7rem;color:var(--danger);margin-left:6px}
+.visor{margin:6px 20px 12px;background:linear-gradient(160deg,var(--ink) 0%,var(--ink-2) 100%);border-radius:12px;padding:14px 18px;color:var(--accent-tint);display:flex;justify-content:space-between;align-items:baseline;box-shadow:inset 0 2px 8px rgba(0,0,0,.4),0 2px 8px rgba(20,32,27,.2);position:relative;overflow:hidden}
+.visor::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(255,255,255,.018) 2px 4px)}
+.visor .lb{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:#5FA888;font-family:var(--mono)}
+.visor .val{font-family:var(--mono);font-size:1.85rem;font-weight:700;letter-spacing:-.02em;text-shadow:0 0 14px rgba(127,224,188,.5)}
+.ticket-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 20px 18px}
+.ticket-actions .btn-money{grid-column:1/-1;padding:16px;font-size:1.08rem;font-family:var(--disp)}
+.ta-sm{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:9px;border:1.5px solid var(--line);font-size:.8rem;font-weight:600;color:var(--txt-soft);transition:all .12s}
+.ta-sm:hover{border-color:var(--brand-bright);color:var(--brand)}
+.ta-sm.danger:hover{border-color:var(--danger);color:var(--danger)}
+.ta-sm .kbd{border-color:#D5D2C4;color:#A09D8E;opacity:1}
+
+/* overlay caixa fechado */
+.cash-block{position:absolute;inset:0;background:rgba(244,243,236,.92);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:20;border-radius:0}
+.cash-block .box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:34px;text-align:center;max-width:340px;box-shadow:var(--shadow-lg)}
+.cash-block .box .ic{width:58px;height:58px;border-radius:50%;background:var(--warm-soft);color:#9A6A12;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.cash-block .box .ic svg{width:28px;height:28px}
+.cash-block h3{margin-bottom:6px}
+.cash-block p{color:var(--txt-soft);font-size:.88rem;margin-bottom:18px}
+
+/* ---------- MODAIS ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(20,32,27,.5);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:120;padding:18px}
+.modal-bg.on{display:flex;animation:fadeIn .15s}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:440px;max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);animation:rise .25s cubic-bezier(.2,.9,.3,1.1)}
+.modal.lg{max-width:560px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+.modal-head h3{font-size:1.08rem}
+.modal-x{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--txt-soft);font-size:1.1rem}
+.modal-x:hover{background:var(--danger-soft);color:var(--danger)}
+.modal-body{padding:20px 22px;overflow-y:auto}
+.modal-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 22px 18px;border-top:1px solid var(--line)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .full{grid-column:1/-1}
+.seg{display:flex;background:#F0EFE7;border-radius:10px;padding:4px;gap:4px}
+.seg button{flex:1;padding:9px;border-radius:7px;font-size:.85rem;font-weight:600;color:var(--txt-soft);transition:all .12s}
+.seg button.on{background:var(--surface);color:var(--brand);box-shadow:var(--shadow)}
+
+/* pagamento */
+.pay-total-strip{background:var(--ink);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;color:var(--accent-tint)}
+.pay-total-strip .lb{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;font-family:var(--mono);color:#5FA888}
+.pay-total-strip .money{font-size:1.5rem;font-weight:700}
+.pay-methods{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px}
+.pm{display:flex;flex-direction:column;align-items:center;gap:6px;padding:13px 6px;border:1.5px solid var(--line);border-radius:11px;font-size:.74rem;font-weight:600;color:var(--txt-soft);transition:all .12s}
+.pm svg{width:22px;height:22px}
+.pm:hover{border-color:var(--brand-bright)}
+.pm.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+.pay-list{margin:14px 0 6px}
+.pay-line{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#F8F7F1;border-radius:9px;margin-bottom:7px;font-size:.86rem}
+.pay-line .money{font-weight:600}
+.pay-line button{color:var(--danger);font-size:.78rem;font-weight:600;margin-left:10px}
+.pay-status{display:flex;justify-content:space-between;font-size:.9rem;padding:11px 4px 2px;border-top:1.5px dashed var(--line);margin-top:8px}
+.pay-status .money{font-weight:700}
+.pay-status.troco .money{color:var(--brand-bright);font-size:1.05rem}
+.quick-cash{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.quick-cash button{font-family:var(--mono);font-size:.8rem;font-weight:600;padding:7px 12px;border:1.5px solid var(--line);border-radius:8px;color:var(--txt-soft)}
+.quick-cash button:hover{border-color:var(--brand-bright);color:var(--brand)}
+
+/* sucesso da venda */
+.sale-done{text-align:center;padding:8px 0 4px}
+.sale-done .ok-ic{width:74px;height:74px;border-radius:50%;background:var(--brand-soft);color:var(--brand-bright);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.sale-done .ok-ic svg{width:38px;height:38px}
+.sale-done h3{font-size:1.25rem;margin-bottom:4px}
+.sale-done .num{font-family:var(--mono);color:var(--txt-soft);font-size:.85rem;margin-bottom:14px}
+.sale-done .troco-big{background:var(--warm-soft);border-radius:12px;padding:14px;margin-bottom:16px}
+.sale-done .troco-big .lb{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9A6A12}
+.sale-done .troco-big .money{font-size:1.9rem;font-weight:700;color:#7A540E;display:block;margin-top:2px}
+
+/* ---------- CUPOM (impressão) ---------- */
+#receiptPrint{display:none}
+.receipt{width:300px;margin:0 auto;background:#fff;font-family:var(--mono);font-size:11.5px;color:#111;padding:18px 16px 26px;line-height:1.45;position:relative}
+.receipt::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:linear-gradient(-45deg,transparent 7px,#fff 0),linear-gradient(45deg,transparent 7px,#fff 0);background-size:16px 12px;background-position:bottom;background-repeat:repeat-x;transform:translateY(100%)}
+.receipt .c{text-align:center}.receipt .b{font-weight:700}
+.receipt hr{border:none;border-top:1px dashed #999;margin:8px 0}
+.receipt .row{display:flex;justify-content:space-between;gap:8px}
+.receipt .row span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.receipt .tot-row{font-size:14px;font-weight:700;display:flex;justify-content:space-between;margin:4px 0}
+.receipt-preview-wrap{background:#EAE8DE;padding:24px;border-radius:12px;display:flex;justify-content:center;max-height:50vh;overflow-y:auto}
+.receipt-preview-wrap .receipt{box-shadow:0 4px 18px rgba(0,0,0,.18)}
+/* ---------- ETIQUETAS ---------- */
+.label-sheet{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
+.lbl{border:1px dashed #bbb;border-radius:6px;padding:7px 8px;text-align:center;page-break-inside:avoid}
+.lbl .nm{font-size:10px;font-weight:700;line-height:1.15;height:24px;overflow:hidden;color:#000}
+.lbl .pr{font-family:var(--mono);font-size:15px;font-weight:800;color:#000;margin:3px 0}
+.lbl svg{width:100%;height:34px}
+.lbl .cd{font-family:var(--mono);font-size:8px;letter-spacing:.5px;color:#000}
+@media print{.no-print-label{display:none!important}}
+/* ---------- LEITOR POR CÂMERA ---------- */
+.scan-btn{flex-shrink:0;width:42px;height:42px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--brand);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s}
+.scan-btn:hover{background:var(--brand-soft);border-color:var(--brand-bright)}
+.scan-btn svg{width:21px;height:21px}
+#scanModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,14,11,.92);z-index:300;padding:20px}
+#scanModal.on{display:flex}
+.scan-box{width:100%;max-width:440px;text-align:center}
+.scan-video-wrap{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:4/3}
+#scanVideo{width:100%;height:100%;object-fit:cover;display:block}
+.scan-reticle{position:absolute;inset:14% 8%;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 9999px rgba(0,0,0,.25)}
+.scan-reticle::after{content:'';position:absolute;left:0;right:0;height:3px;background:var(--accent-glow);box-shadow:0 0 10px var(--accent-glow);animation:scanline 2s ease-in-out infinite}
+@keyframes scanline{0%,100%{top:6%}50%{top:92%}}
+.scan-hint{color:#fff;font-size:.9rem;margin:16px 0 6px}
+.scan-sub{color:rgba(255,255,255,.6);font-size:.8rem;margin-bottom:16px;line-height:1.5}
+
+@media print{
+  @page{margin:5mm}
+  body>*:not(#receiptPrint){display:none!important}
+  #receiptPrint{display:block!important;position:static;width:100%}
+  .receipt{box-shadow:none;width:100%;max-width:320px;padding:0 4px 14px}
+  .receipt::after{display:none}
+}
+
+.lic-days{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.78rem;font-weight:700}
+/* ---------- TOAST / CONFIRM ---------- */
+#toasts{position:fixed;top:18px;right:18px;z-index:300;display:flex;flex-direction:column;gap:9px;pointer-events:none}
+.toast{background:var(--ink);color:#fff;padding:12px 16px;border-radius:11px;font-size:.86rem;font-weight:500;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;animation:slideL .25s cubic-bezier(.2,.9,.3,1.2);max-width:320px}
+@keyframes slideL{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.toast.ok{border-left:4px solid var(--brand-bright)}
+.toast.warn{border-left:4px solid var(--warm)}
+.toast.err{border-left:4px solid var(--danger)}
+.toast svg{width:17px;height:17px;flex-shrink:0}
+
+/* ---------- RELATÓRIOS (gráficos) ---------- */
+.rep-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:190px;padding:10px 4px 0}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%;justify-content:flex-end}
+.bar-col .bar{width:100%;max-width:46px;background:linear-gradient(180deg,var(--brand-bright),var(--brand));border-radius:7px 7px 3px 3px;min-height:3px;transition:height .5s cubic-bezier(.2,.9,.3,1);position:relative}
+.bar-col .bv{font-family:var(--mono);font-size:.62rem;color:var(--txt-soft);white-space:nowrap}
+.bar-col .bl{font-size:.68rem;color:var(--txt-soft);font-weight:600}
+.hbar-row{margin-bottom:13px}
+.hbar-top{display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:5px}
+.hbar-top .money{font-weight:600}
+.hbar{height:9px;background:#EFEEE5;border-radius:99px;overflow:hidden}
+.hbar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-bright));border-radius:99px;transition:width .5s}
+.hbar.warm i{background:linear-gradient(90deg,#C9882B,var(--warm))}
+
+/* ---------- MOBILE ---------- */
+.menu-btn,.mobile-bar{display:none}
+.fab-charge{display:none}
+/* ---------- SELETOR DE COR DO SISTEMA ---------- */
+.theme-grid{display:flex;gap:10px;flex-wrap:wrap}
+.theme-sw{width:84px;border:2px solid var(--line);border-radius:12px;padding:8px 8px 7px;display:flex;flex-direction:column;gap:7px;align-items:center;background:var(--surface);transition:transform .12s,border-color .12s,box-shadow .12s}
+.theme-sw:hover{transform:translateY(-2px);border-color:var(--brand-bright)}
+.theme-sw.on{border-color:var(--brand-bright);box-shadow:0 0 0 3px rgba(var(--bright-rgb),.18)}
+.theme-sw .tprev{width:100%;height:34px;border-radius:8px;position:relative;overflow:hidden}
+.theme-sw .tprev::after{content:'R$';position:absolute;right:7px;bottom:4px;font-family:var(--mono);font-size:.66rem;font-weight:700;color:#fff;opacity:.92}
+.theme-sw small{font-size:.72rem;font-weight:700;color:var(--txt-soft);letter-spacing:.01em}
+.theme-sw.on small{color:var(--brand)}
+.theme-sw .tcheck{position:absolute;top:5px;left:5px;width:16px;height:16px;border-radius:50%;background:#fff;display:none;align-items:center;justify-content:center}
+.theme-sw.on .tcheck{display:flex}
+.theme-sw .tcheck svg{width:10px;height:10px}
+
+@media(max-width:920px){
+  :root{--sidebar-w:0px}
+  .sidebar{transform:translateX(-110%);transition:transform .25s cubic-bezier(.2,.9,.3,1);width:260px;box-shadow:var(--shadow-lg)}
+  .sidebar.open{transform:none}
+  .sb-backdrop{position:fixed;inset:0;background:rgba(20,32,27,.45);z-index:55;display:none}
+  .sb-backdrop.on{display:block}
+  .main{margin-left:0;padding-bottom:64px}
+  .menu-btn{display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);flex-shrink:0}
+  .menu-btn svg{width:20px;height:20px}
+  .screen{padding:16px 14px 90px}
+  .pdv-wrap{flex-direction:column;min-height:auto}
+  .pdv-left{padding:14px 14px 8px}
+  .prod-grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));max-height:34vh;padding-bottom:10px}
+  .pdv-right{width:100%;border-left:none;border-top:1.5px dashed var(--line);flex:1}
+  .ticket-items{max-height:30vh}
+  .pay-methods{grid-template-columns:repeat(2,1fr)}
+  .rep-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .mobile-bar{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:70;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .mb-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:.62rem;font-weight:600;color:var(--txt-soft);border-radius:9px}
+  .mb-item svg{width:21px;height:21px}
+  .mb-item.on{color:var(--brand)}
+  .kbd{display:none}
+  .pdv-hint{display:none}
+  .visor .val{font-size:1.55rem}
+}
+@media(max-width:560px){
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .screen-head h2{font-size:1.25rem}
+  .modal{max-height:88vh}
+}
+</style>
+</head>
+<body>
+
+<!-- ====== LOGIN ====== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-head">
+      <div class="brand-mark">
+        <div class="sq">R$</div>
+        <h1 id="loginStoreName">PinhoPDV<small>sistema de ponto de venda</small></h1>
+      </div>
+    </div>
+    <div class="login-body">
+      <div class="field"><label>Usuário</label><input class="inp" id="loginUser" autocomplete="username" placeholder="seu usuário"></div>
+      <div class="field"><label>Senha</label><input class="inp" id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn btn-money btn-block" onclick="doLogin()">Entrar no caixa</button>
+      <div class="login-hint" id="loginHint">Primeiro acesso: usuário <code>admin</code> · senha <code>admin123</code><br>Troque a senha em Configurações → Usuários.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== APP ====== -->
+<div id="app">
+<div class="sb-backdrop" id="sbBackdrop" onclick="toggleSidebar(false)"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-head">
+    <div class="brand-mark"><div class="sq">R$</div><h1 id="sbStoreName">PinhoPDV<small>ponto de venda</small></h1></div>
+  </div>
+  <nav class="sb-nav" id="sbNav">
+    <button class="nav-item on" data-go="pdv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h11l2-8H7"/><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/></svg>Frente de caixa<span class="kbd">F2</span></button>
+    <button class="nav-item" data-go="produtos" data-perm="produtos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 8.3L12 13l8.7-4.7M12 13v9"/></svg>Produtos</button>
+    <button class="nav-item" data-go="clientes" data-perm="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5"/><path d="M16 4.5a3.5 3.5 0 010 7M18.5 15.5c2 .7 3 2.2 3.5 4.5"/></svg>Clientes</button>
+    <button class="nav-item" data-go="vendas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l3 4v12a2 2 0 01-2 2H7a2 2 0 01-2-2V7z"/><path d="M9 12h6M9 16h4"/></svg>Vendas</button>
+    <button class="nav-item" data-go="caixa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="10" rx="2"/><path d="M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4M12 14v2"/></svg>Controle de caixa</button>
+    <button class="nav-item" data-go="relatorios" data-perm="relatorios"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>Relatórios</button>
+    <button class="nav-item" data-go="config" data-perm="config"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3h.1a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5h.1a1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v.1a1.7 1.7 0 001.5 1h.2a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Configurações</button>
+  </nav>
+  <div class="sb-foot">
+    <div class="cash-pill closed" id="cashPill"><span class="dot"></span><span id="cashPillTxt">Caixa fechado</span></div>
+    <div class="sb-user"><div class="avatar" id="userAvatar">A</div><div><div class="nm" id="userName">—</div><div class="rl" id="userRole">—</div></div></div>
+    <button class="btn btn-money btn-sm btn-block" id="installBtn" style="display:none;margin-bottom:8px;align-items:center;justify-content:center;gap:7px" onclick="installApp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg> Instalar app</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.18);color:#AFC3B8;flex:0 0 auto;padding:8px 11px" onclick="openThemeModal()" title="Cor do sistema" aria-label="Cor do sistema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px"><path d="M12 21a9 9 0 110-18c4.97 0 9 3.58 9 8 0 2.76-2.24 5-5 5h-1.7c-.83 0-1.5.67-1.5 1.5 0 .37.14.71.36.97.22.27.34.61.34.98A1.55 1.55 0 0112 21z"/><circle cx="7.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="10.8" cy="7.6" r=".6" fill="currentColor"/><circle cx="15.4" cy="9.3" r=".6" fill="currentColor"/></svg></button>
+      <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.18);color:#AFC3B8;flex:1" onclick="logout()">Sair</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main" id="main">
+
+<!-- ====== TELA: PDV ====== -->
+<section class="screen on" id="screen-pdv">
+ <div class="pdv-wrap" style="position:relative">
+  <div class="cash-block" id="cashBlock" style="display:none">
+    <div class="box">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></div>
+      <h3>Caixa fechado</h3>
+      <p>Para registrar vendas, abra o caixa informando o fundo de troco.</p>
+      <button class="btn btn-money btn-block" onclick="openCashModal()">Abrir caixa</button>
+    </div>
+  </div>
+  <div class="pdv-left">
+    <div class="pdv-search-row">
+      <button class="menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="pdv-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="pdvSearch" placeholder="Buscar produto ou passar código de barras…" autocomplete="off" oninput="renderProdGrid()" onkeydown="pdvSearchKey(event)">
+        <button class="scan-btn" onclick="openScanner('pdv')" title="Ler código pela câmera" aria-label="Ler código pela câmera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><path d="M3 12h18"/></svg></button>
+      </div>
+    </div>
+    <div class="pdv-hint">F1 busca · F4 desconto · F5 cobrar · F8 cancela venda · dica: digite 3*código para 3 unidades</div>
+    <div class="cat-row" id="catRow"></div>
+    <div class="prod-grid" id="prodGrid"></div>
+  </div>
+  <div class="pdv-right">
+    <div class="ticket-head"><h3><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h12v20l-2-1.5L14 22l-2-1.5L10 22l-2-1.5L6 22z"/><path d="M9 7h6M9 11h6"/></svg>Cupom atual</h3><button class="cnt" id="holdsBadge" onclick="openHolds()" title="Vendas em espera" style="display:none;background:var(--warm-soft);color:#8A5A14;border-radius:99px;padding:3px 10px;font-weight:700;margin-right:6px">⏸ 0</button><span class="cnt" id="ticketCount">0 itens</span></div>
+    <div class="ticket-cust">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.4 3.6-5 7-5s6.2 1.6 7 5"/></svg>
+      <span id="ticketCustName" style="flex:1">Consumidor final</span>
+      <button onclick="openCustPicker()" id="ticketCustBtn">vincular cliente</button>
+    </div>
+    <div class="ticket-items" id="ticketItems"></div>
+    <div class="ticket-totals" id="ticketTotals"></div>
+    <div class="visor"><span class="lb">Total</span><span class="val money" id="visorTotal">R$ 0,00</span></div>
+    <div class="ticket-actions">
+      <button class="ta-sm" onclick="holdTicket()">Espera <span class="kbd">F6</span></button>
+      <button class="ta-sm" onclick="openDiscountModal()">Desconto <span class="kbd">F4</span></button>
+      <button class="ta-sm danger" onclick="cancelTicket()">Cancelar <span class="kbd">F8</span></button>
+      <button class="btn btn-money" id="btnCharge" onclick="openPayModal()">Cobrar&nbsp;<span class="kbd" style="border-color:rgba(255,255,255,.5);color:#fff">F5</span></button>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- ====== TELA: PRODUTOS ====== -->
+<section class="screen" id="screen-produtos">
+  <div class="screen-head">
+    <div style="display:flex;gap:12px;align-items:center"><button class="menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h2>Produtos</h2><p id="prodSub">—</p></div></div>
+    <div class="head-actions">
+      <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input class="inp" id="prodSearch" placeholder="Buscar por nome, código ou categoria" oninput="renderProducts()"></div>
+      <button class="btn btn-ghost" onclick="openLabels()" title="Imprimir etiquetas">🏷️ Etiquetas</button>
+      <button class="btn btn-ghost" onclick="exportSalesXLS()" title="Exportar vendas">📊 Excel</button>
+      <button class="btn btn-primary" data-perm-act="edit_prod" onclick="openProdModal()">+ Novo produto</button>
+    </div>
+  </div>
+  <div class="card tbl-wrap"><table id="prodTable"></table></div>
+</section>
+
+<!-- ====== TELA: CLIENTES ====== -->
+<section class="screen" id="screen-clientes">
+  <div class="screen-head">
+    <div style="display:flex;gap:12px;align-items:center"><button class="menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h2>Clientes</h2><p id="custSub">—</p></div></div>
+    <div class="head-actions">
+      <div class="search-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input class="inp" id="custSearch" placeholder="Buscar cliente" oninput="renderCustomers()"></div>
+      <button class="btn btn-primary" onclick="openCustModal()">+ Novo cliente</button>
+    </div>
+  </div>
+  <div class="card tbl-wrap"><table id="custTable"></table></div>
+</section>
+
+<!-- ====== TELA: VENDAS ====== -->
+<section class="screen" id="screen-vendas">
+  <div class="screen-head">
+    <div style="display:flex;gap:12px;align-items:center"><button class="menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h2>Vendas</h2><p id="salesSub">—</p></div></div>
+    <div class="head-actions">
+      <select class="inp" id="salesFilter" onchange="renderSales()" style="width:auto">
+        <option value="hoje">Hoje</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="all">Todas</option>
+      </select>
+    </div>
+  </div>
+  <div class="card tbl-wrap"><table id="salesTable"></table></div>
+</section>
+
+<!-- ====== TELA: CAIXA ====== -->
+<section class="screen" id="screen-caixa">
+  <div class="screen-head">
+    <div style="display:flex;gap:12px;align-items:center"><button class="menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h2>Controle de caixa</h2><p id="cashSub">—</p></div></div>
+    <div class="head-actions" id="cashActions"></div>
+  </div>
+  <div id="cashContent"></div>
+</section>
+
+<!-- ====== TELA: RELATÓRIOS ====== -->
+<section class="screen" id="screen-relatorios">
+  <div class="screen-head">
+    <div style="display:flex;gap:12px;align-items:center"><button class="menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h2>Relatórios</h2><p>Visão geral do desempenho da loja</p></div></div>
+  </div>
+  <div id="repContent"></div>
+</section>
+
+<!-- ====== TELA: CONFIGURAÇÕES ====== -->
+<section class="screen" id="screen-config">
+  <div class="screen-head">
+    <div style="display:flex;gap:12px;align-items:center"><button class="menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h2>Configurações</h2><p>Loja, usuários e backup dos dados</p></div></div>
+  </div>
+  <div id="cfgContent"></div>
+</section>
+
+</div><!-- /main -->
+
+<!-- barra mobile -->
+<nav class="mobile-bar" id="mobileBar">
+  <button class="mb-item on" data-go="pdv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h11l2-8H7"/><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/></svg>Caixa</button>
+  <button class="mb-item" data-go="produtos" data-perm="produtos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 8.3L12 13l8.7-4.7M12 13v9"/></svg>Produtos</button>
+  <button class="mb-item" data-go="vendas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h8l3 4v12a2 2 0 01-2 2H7a2 2 0 01-2-2V7z"/><path d="M9 12h6M9 16h4"/></svg>Vendas</button>
+  <button class="mb-item" data-go="caixa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="10" rx="2"/><path d="M5 10V6a2 2 0 012-2h10a2 2 0 012 2v4M12 14v2"/></svg>Caixa $</button>
+  <button class="mb-item" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Menu</button>
+</nav>
+</div><!-- /app -->
+
+<!-- ====== MODAIS GENÉRICOS ====== -->
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalBox"><div class="modal-head"><h3 id="modalTitle">—</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-body" id="modalBody"></div><div class="modal-foot" id="modalFoot"></div></div></div>
+
+<!-- cupom para impressão -->
+<div id="receiptPrint"></div>
+<div id="scanModal">
+  <div class="scan-box">
+    <div class="scan-video-wrap"><video id="scanVideo" playsinline muted></video><div class="scan-reticle"></div></div>
+    <div class="scan-hint">Aponte para o código de barras</div>
+    <div class="scan-sub">Mantenha o código dentro do quadro, bem iluminado.<br>No modo caixa, vários itens podem ser lidos em sequência.</div>
+    <button class="btn btn-ghost" style="border-color:rgba(255,255,255,.3);color:#fff" onclick="closeScanner()">Fechar câmera</button>
+  </div>
+</div>
+<div id="toasts"></div>
+
+<script>
+/* QRCode generator — (c) 2009 Kazuhiko Arase — MIT License. Empacotado para uso offline no PinhoPDV. */
+window.QRGen=(function(){
+var module,exports;
+var M={};
+function def(name,factory){var m={exports:{}};factory(m,m.exports);M[name]=m.exports;}
+function req(name){return M[name];}
+def('QRMode',function(module,exports){
+module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};
+
+});
+def('QRErrorCorrectLevel',function(module,exports){
+module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};
+
+
+});
+def('QRMaskPattern',function(module,exports){
+module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};
+
+});
+def('QRMath',function(module,exports){
+var QRMath = {
+
+	glog : function(n) {
+	
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		
+		return QRMath.LOG_TABLE[n];
+	},
+	
+	gexp : function(n) {
+	
+		while (n < 0) {
+			n += 255;
+		}
+	
+		while (n >= 256) {
+			n -= 255;
+		}
+	
+		return QRMath.EXP_TABLE[n];
+	},
+	
+	EXP_TABLE : new Array(256),
+	
+	LOG_TABLE : new Array(256)
+
+};
+	
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+
+module.exports = QRMath;
+
+});
+def('QR8bitByte',function(module,exports){
+var QRMode = req('QRMode');
+
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = data;
+}
+
+QR8bitByte.prototype = {
+
+	getLength : function() {
+		return this.data.length;
+	},
+	
+	write : function(buffer) {
+		for (var i = 0; i < this.data.length; i++) {
+			// not JIS ...
+			buffer.put(this.data.charCodeAt(i), 8);
+		}
+	}
+};
+
+module.exports = QR8bitByte;
+
+});
+def('QRBitBuffer',function(module,exports){
+function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+
+QRBitBuffer.prototype = {
+
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	
+	getLengthInBits : function() {
+		return this.length;
+	},
+	
+	putBit : function(bit) {
+	
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+	
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+	
+		this.length++;
+	}
+};
+
+module.exports = QRBitBuffer;
+
+});
+def('QRRSBlock',function(module,exports){
+var QRErrorCorrectLevel = req('QRErrorCorrectLevel');
+
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+
+QRRSBlock.RS_BLOCK_TABLE = [
+
+	// L
+	// M
+	// Q
+	// H
+
+	// 1
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+	
+	// 2
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+
+	// 3
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+
+	// 4		
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+	
+	// 5
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+	
+	// 6
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+	
+	// 7		
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+	
+	// 8
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+	
+	// 9
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+	
+	// 10		
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+
+	// 11
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+
+	// 12
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+
+	// 13
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+
+	// 14
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+
+	// 15
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+
+	// 16
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+
+	// 17
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+
+	// 18
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+
+	// 19
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+
+	// 20
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+
+	// 21
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+
+	// 22
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+
+	// 23
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+
+	// 24
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+
+	// 25
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+
+	// 26
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+
+	// 27
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+
+	// 28
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+
+	// 29
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+
+	// 30
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+
+	// 31
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+
+	// 32
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+
+	// 33
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+
+	// 34
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+
+	// 35
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+
+	// 36
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+
+	// 37
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+
+	// 38
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+
+	// 39
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+
+	// 40
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+
+	var length = rsBlock.length / 3;
+	
+	var list = [];
+	
+	for (var i = 0; i < length; i++) {
+
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	
+	return list;
+};
+
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+
+module.exports = QRRSBlock;
+
+});
+def('QRPolynomial',function(module,exports){
+var QRMath = req('QRMath');
+
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+
+	var offset = 0;
+
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+
+QRPolynomial.prototype = {
+
+	get : function(index) {
+		return this.num[index];
+	},
+	
+	getLength : function() {
+		return this.num.length;
+	},
+	
+	multiply : function(e) {
+	
+		var num = new Array(this.getLength() + e.getLength() - 1);
+	
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+	
+		return new QRPolynomial(num, 0);
+	},
+	
+	mod : function(e) {
+	
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+	
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+	
+		var num = new Array(this.getLength() );
+		
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+	
+		// recursive call
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+
+module.exports = QRPolynomial;
+
+});
+def('QRUtil',function(module,exports){
+var QRMode = req('QRMode');
+var QRPolynomial = req('QRPolynomial');
+var QRMath = req('QRMath');
+var QRMaskPattern = req('QRMaskPattern');
+
+var QRUtil = {
+
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+
+    getBCHDigit : function(data) {
+
+        var digit = 0;
+
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+
+        return digit;
+    },
+
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+
+    getMask : function(maskPattern, i, j) {
+        
+        switch (maskPattern) {
+            
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+
+        var a = new QRPolynomial([1], 0);
+
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+
+        return a;
+    },
+
+    getLengthInBits : function(mode, type) {
+
+        if (1 <= type && type < 10) {
+
+            // 1 - 9
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 27) {
+
+            // 10 - 26
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 41) {
+
+            // 27 - 40
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+
+    getLostPoint : function(qrCode) {
+        
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+
+        
+        // LEVEL1
+        
+        for (row = 0; row < moduleCount; row++) {
+
+            for (col = 0; col < moduleCount; col++) {
+
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+
+                for (var r = -1; r <= 1; r++) {
+
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+
+                    for (var c = -1; c <= 1; c++) {
+
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+
+        // LEVEL2
+
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+
+        // LEVEL3
+
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        // LEVEL4
+        
+        var darkCount = 0;
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+
+        return lostPoint;       
+    }
+
+};
+
+module.exports = QRUtil;
+
+});
+def('index',function(module,exports){
+//---------------------------------------------------------------------
+// QRCode for JavaScript
+//
+// Copyright (c) 2009 Kazuhiko Arase
+//
+// URL: http://www.d-project.com/
+//
+// Licensed under the MIT license:
+//   http://www.opensource.org/licenses/mit-license.php
+//
+// The word "QR Code" is registered trademark of 
+// DENSO WAVE INCORPORATED
+//   http://www.denso-wave.com/qrcode/faqpatent-e.html
+//
+//---------------------------------------------------------------------
+// Modified to work in node for this project (and some refactoring)
+//---------------------------------------------------------------------
+
+var QR8bitByte = req('QR8bitByte');
+var QRUtil = req('QRUtil');
+var QRPolynomial = req('QRPolynomial');
+var QRRSBlock = req('QRRSBlock');
+var QRBitBuffer = req('QRBitBuffer');
+
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+
+QRCode.prototype = {
+	
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	
+	make : function() {
+		// Calculate automatically typeNumber if provided is < 1
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	
+	makeImpl : function(test, maskPattern) {
+		
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		
+		for (var row = 0; row < this.moduleCount; row++) {
+			
+			this.modules[row] = new Array(this.moduleCount);
+			
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+	
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+	
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+	
+		this.mapData(this.dataCache, maskPattern);
+	},
+
+	setupPositionProbePattern : function(row, col)  {
+		
+		for (var r = -1; r <= 7; r++) {
+			
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			
+			for (var c = -1; c <= 7; c++) {
+				
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	
+	getBestMaskPattern : function() {
+	
+		var minLostPoint = 0;
+		var pattern = 0;
+	
+		for (var i = 0; i < 8; i++) {
+			
+			this.makeImpl(true, i);
+	
+			var lostPoint = QRUtil.getLostPoint(this);
+	
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+	
+		return pattern;
+	},
+	
+	createMovieClip : function(target_mc, instance_name, depth) {
+	
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+	
+		this.make();
+
+		for (var row = 0; row < this.modules.length; row++) {
+			
+			var y = row * cs;
+			
+			for (var col = 0; col < this.modules[row].length; col++) {
+	
+				var x = col * cs;
+				var dark = this.modules[row][col];
+			
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		
+		return qr_mc;
+	},
+
+	setupTimingPattern : function() {
+		
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+	
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	
+	setupPositionAdjustPattern : function() {
+	
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		
+		for (var i = 0; i < pos.length; i++) {
+		
+			for (var j = 0; j < pos.length; j++) {
+			
+				var row = pos[i];
+				var col = pos[j];
+				
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				
+				for (var r = -2; r <= 2; r++) {
+				
+					for (var c = -2; c <= 2; c++) {
+					
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	
+	setupTypeNumber : function(test) {
+	
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+	
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+	
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	
+	setupTypeInfo : function(test, maskPattern) {
+	
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+	
+		// vertical		
+		for (var v = 0; v < 15; v++) {
+	
+			mod = (!test && ( (bits >> v) & 1) === 1);
+	
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+	
+		// horizontal
+		for (var h = 0; h < 15; h++) {
+	
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+	
+		// fixed module
+		this.modules[this.moduleCount - 8][8] = (!test);
+	
+	},
+	
+	mapData : function(data, maskPattern) {
+		
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+	
+			if (col === 6) col--;
+	
+			while (true) {
+	
+				for (var c = 0; c < 2; c++) {
+					
+					if (this.modules[row][col - c] === null) {
+						
+						var dark = false;
+	
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+	
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+	
+						if (mask) {
+							dark = !dark;
+						}
+						
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+	
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+								
+				row += inc;
+	
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+		
+	}
+
+};
+
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	
+	var buffer = new QRBitBuffer();
+	
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+
+	// calc num max data.
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+
+	// end code
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+
+	// padding
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+
+	// padding
+	while (true) {
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+
+QRCode.createBytes = function(buffer, rsBlocks) {
+
+	var offset = 0;
+	
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	
+	for (var r = 0; r < rsBlocks.length; r++) {
+
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		
+		dcdata[r] = new Array(dcCount);
+		
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+
+	}
+	
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+
+	var data = new Array(totalCodeCount);
+	var index = 0;
+
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+
+	return data;
+
+};
+
+module.exports = QRCode;
+
+});
+return M['index'];
+})();
+
+/* ============================================================
+   CAMADA DE DADOS — localStorage com fallback em memória
+   ============================================================ */
+const DB={
+  mem:{},ok:false,
+  init(){try{localStorage.setItem('__cv_t','1');localStorage.removeItem('__cv_t');this.ok=true}catch(e){this.ok=false}},
+  get(k,d){if(this.ok){try{const v=localStorage.getItem('cv_'+k);if(v!==null)return JSON.parse(v)}catch(e){}}return (k in this.mem)?this.mem[k]:d},
+  set(k,v){this.mem[k]=v;if(this.ok){try{localStorage.setItem('cv_'+k,JSON.stringify(v))}catch(e){toast('Espaço de armazenamento cheio. Exporte um backup.','err')}}},
+  del(k){delete this.mem[k];if(this.ok){try{localStorage.removeItem('cv_'+k)}catch(e){}}}
+};
+DB.init();
+
+/* ---------- ESTADO ---------- */
+const S={
+  users:DB.get('users',[]),
+  products:DB.get('products',[]),
+  customers:DB.get('customers',[]),
+  sales:DB.get('sales',[]),
+  cashSessions:DB.get('cashSessions',[]),
+  settings:DB.get('settings',{storeName:'PinhoPDV',doc:'',address:'',phone:'',footer:'Obrigado pela preferência! Volte sempre.',allowNoStock:true,theme:'verde',pixKey:'',pixCity:'',autoPrint:false,commission:0}),
+  holds:DB.get('holds',[]),
+  seq:DB.get('seq',{sale:0})
+};
+const save=k=>DB.set(k,S[k]);
+let session=DB.get('session',null);   // usuário logado
+let ticket={items:[],discType:'%',discValue:0,customerId:null};
+let payState=null;
+let activeCat='__all';
+let currentScreen='pdv';
+
+/* ---------- UTILS ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=v=>(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const fmtN=v=>(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const parseMoney=s=>{if(typeof s==='number')return s;s=String(s||'').replace(/[R$\s.]/g,'').replace(',','.');const n=parseFloat(s);return isNaN(n)?0:n};
+const uid=()=> (crypto.randomUUID ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(36).slice(2,9));
+const todayStr=d=>new Date(d).toLocaleDateString('pt-BR');
+const timeStr=d=>new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const dtStr=d=>todayStr(d)+' '+timeStr(d);
+const sameDay=(a,b)=>{const x=new Date(a),y=new Date(b);return x.getFullYear()===y.getFullYear()&&x.getMonth()===y.getMonth()&&x.getDate()===y.getDate()};
+async function sha256(t){
+  try{const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('cv·'+t));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+  catch(e){ /* fallback p/ contextos sem WebCrypto (ex.: http sem TLS) */
+    let h=5381;const s='cv·'+t;for(let i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))>>>0}return 'djb2:'+h.toString(16)}
+}
+function pixCRC(s){let c=0xFFFF;for(let i=0;i<s.length;i++){c^=s.charCodeAt(i)<<8;for(let j=0;j<8;j++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
+function pixPayload(amount){
+  const key=(S.settings.pixKey||'').trim();if(!key)return null;
+  const f=(id,v)=>id+String(v.length).padStart(2,'0')+v;
+  const name=(S.settings.storeName||'PINHOPDV').toUpperCase().replace(/[^ -~]/g,'').slice(0,25)||'LOJA';
+  const city=(S.settings.pixCity||'CIDADE').toUpperCase().replace(/[^ -~]/g,'').slice(0,15)||'CIDADE';
+  const mai=f('26',f('00','BR.GOV.BCB.PIX')+f('01',key));
+  let p=f('00','01')+mai+f('52','0000')+f('53','986');
+  if(amount>0)p+=f('54',amount.toFixed(2));
+  p+=f('58','BR')+f('59',name)+f('60',city)+f('62',f('05','***'))+'6304';
+  return p+pixCRC(p);
+}
+function qrSVG(text,px){
+  try{
+    const qr=new window.QRGen(0,0);qr.addData(text);qr.make();
+    const n=qr.getModuleCount(),q=4,total=n+q*2,cell=px/total;
+    let r=`<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect width="${px}" height="${px}" fill="#fff"/>`;
+    for(let row=0;row<n;row++)for(let col=0;col<n;col++)if(qr.isDark(row,col))r+=`<rect x="${(col+q)*cell}" y="${(row+q)*cell}" width="${cell}" height="${cell}" fill="#000"/>`;
+    return r+'</svg>';
+  }catch(e){return'<p style="color:var(--danger);font-size:.82rem">Não foi possível gerar o QR.</p>'}
+}
+/* Code128-B barcode em SVG (suficiente para etiquetas internas) */
+const C128=(()=>{const P=['11011001100','11001101100','11001100110','10010011000','10010001100','10001001100','10011001000','10011000100','10001100100','11001001000','11001000100','11000100100','10110011100','10011011100','10011001110','10111001100','10011101100','10011100110','11001110010','11001011100','11001001110','11011100100','11001110100','11101101110','11101001100','11100101100','11100100110','11101100100','11100110100','11100110010','11011011000','11011000110','11000110110','10100011000','10001011000','10001000110','10110001000','10001101000','10001100010','11010001000','11000101000','11000100010','10110111000','10110001110','10001101110','10111011000','10111000110','10001110110','11101110110','11010001110','11000101110','11011101000','11011100010','11011101110','11101011000','11101000110','11100010110','11101101000','11101100010','11100011010','11101111010','11001000010','11110001010','10100110000','10100001100','10010110000','10010000110','10000101100','10000100110','10110010000','10110000100','10011010000','10011000010','10000110100','10000110010','11000010010','11001010000','11110111010','11000010100','10001111010','10100111100','10010111100','10010011110','10111100100','10011110100','10011110010','11110100100','11110010100','11110010010','11011011110','11011110110','11110110110','10101111000','10100011110','10001011110','10111101000','10111100010','11110101000','11110100010','10111011110','10111101110','11101011110','11110101110','11010000100','11010010000','11010011100','11000111010'];
+  return function(text,w,h){text=String(text);let sum=104,codes=[104];for(let i=0;i<text.length;i++){const v=text.charCodeAt(i)-32;codes.push(v);sum+=v*(i+1)}codes.push(sum%103);codes.push(106);
+    let bits='';codes.forEach(c=>bits+=P[c]);const bw=w/bits.length;let x=0,rects='';
+    for(let i=0;i<bits.length;i++){if(bits[i]==='1')rects+=`<rect x="${(x).toFixed(2)}" y="0" width="${bw.toFixed(2)}" height="${h}"/>`;x+=bw}
+    return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" fill="#000">${rects}</svg>`;
+  };
+})();
+function setCommission(){
+  openModal('Comissão dos vendedores',`
+    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:12px">Percentual aplicado sobre o total líquido vendido por cada operador. Use 0 para desligar.</p>
+    <div class="field"><label>Comissão (%)</label><input class="inp money" id="commVal" inputmode="decimal" value="${S.settings.commission||0}" placeholder="Ex.: 5" onkeydown="if(event.key==='Enter')saveCommission()"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="saveCommission()">Salvar</button>`);
+  setTimeout(()=>$('commVal').focus(),60);
+}
+function saveCommission(){
+  const v=parseMoney($('commVal').value);
+  if(v<0||v>100)return toast('Informe um valor entre 0 e 100','warn');
+  S.settings.commission=v;save('settings');closeModal();renderReports();
+  toast(v>0?'Comissão definida em '+v+'%':'Comissão desligada');
+}
+function openLabels(){
+  const withCode=S.products.filter(p=>p.active!==false);
+  openModal('Imprimir etiquetas',`
+    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:12px">Selecione os produtos e a quantidade de etiquetas. Imprime 3 por linha (papel A4 comum ou folha de etiquetas).</p>
+    <div style="max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:10px">
+    ${withCode.length?withCode.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line)">
+      <input type="checkbox" class="lblChk" data-id="${p.id}" style="width:16px;height:16px;accent-color:var(--brand)">
+      <div style="flex:1;min-width:0"><b style="font-size:.86rem">${esc(p.name)}</b><br><span class="money" style="font-size:.74rem;color:var(--txt-soft)">${esc(p.code||'sem código')} · ${fmt(p.promo>0?p.promo:p.price)}</span></div>
+      <input type="number" class="lblQty" data-id="${p.id}" value="1" min="1" max="100" style="width:56px;padding:6px;border:1.5px solid var(--line);border-radius:8px;text-align:center">
+    </div>`).join(''):'<p style="padding:18px;text-align:center;color:var(--txt-soft)">Nenhum produto ativo.</p>'}
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="printLabels()">🖨 Imprimir selecionadas</button>`,true);
+}
+function printLabels(){
+  let html='';
+  document.querySelectorAll('.lblChk:checked').forEach(chk=>{
+    const p=S.products.find(x=>x.id===chk.dataset.id);if(!p)return;
+    const q=Math.max(1,parseInt(document.querySelector('.lblQty[data-id="'+p.id+'"]').value)||1);
+    const price=p.promo>0?p.promo:p.price;
+    for(let i=0;i<q;i++)html+=`<div class="lbl"><div class="nm">${esc(p.name)}</div><div class="pr">${fmt(price)}</div>${p.code?C128(p.code,200,34)+`<div class="cd">${esc(p.code)}</div>`:'<div class="cd">—</div>'}</div>`;
+  });
+  if(!html)return toast('Selecione ao menos um produto','warn');
+  $('receiptPrint').innerHTML='<div class="label-sheet">'+html+'</div>';
+  closeModal();
+  setTimeout(()=>window.print(),80);
+}
+/* ===== EXPORTAR VENDAS (Excel via CSV UTF-8 com BOM) ===== */
+function exportSalesXLS(){
+  const rows=[['Cupom','Data','Hora','Cliente','Operador','Itens','Subtotal','Desconto','Devolvido','Total liquido','Pagamentos','Status']];
+  [...S.sales].sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>{
+    rows.push([
+      String(s.num).padStart(4,'0'), todayStr(s.date), timeStr(s.date),
+      s.customerName||'Consumidor final', s.userName||'',
+      s.items.reduce((a,i)=>a+i.qty,0),
+      fmtN(s.subtotal), fmtN(s.discount||0), fmtN(refundTotal(s)),
+      fmtN(s.status==='ok'?netTotal(s):0),
+      s.payments.map(p=>payLabel(p.method)+' '+fmtN(p.amount)).join(' | '),
+      s.status==='ok'?'OK':'Estornada'
+    ]);
+  });
+  const csv=rows.map(r=>r.map(c=>{c=String(c);return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(';')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='vendas-pinhopdv-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
+  toast('Vendas exportadas (abre no Excel)');
+}
+function toast(msg,type='ok'){
+  const ic={ok:'<svg viewBox="0 0 24 24" fill="none" stroke="#2FD895" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    warn:'<svg viewBox="0 0 24 24" fill="none" stroke="#E8A33D" stroke-width="2.5" stroke-linecap="round"><path d="M12 8v5M12 16.5v.5"/><path d="M10.3 3.8L2.6 17a2 2 0 001.7 3h15.4a2 2 0 001.7-3L13.7 3.8a2 2 0 00-3.4 0z"/></svg>',
+    err:'<svg viewBox="0 0 24 24" fill="none" stroke="#E06A5A" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>'};
+  const t=document.createElement('div');t.className='toast '+type;t.innerHTML=ic[type]+esc(msg);
+  $('toasts').appendChild(t);setTimeout(()=>{t.style.transition='opacity .3s,transform .3s';t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),320)},3200);
+}
+
+
+/* ---------- COR DO SISTEMA (TEMAS) ---------- */
+const THEMES={
+  verde:   {label:'Verde',    ink:'#14201B',ink2:'#1D2E26',brand:'#0E5E45',bright:'#17A673',soft:'#E3F2EB',brandRgb:'14,94,69',  brightRgb:'23,166,115',tint:'#7FE0BC',glow:'#2FD895'},
+  azul:    {label:'Azul',     ink:'#121A24',ink2:'#1A2735',brand:'#1B4F8A',bright:'#2E7CC9',soft:'#E4EEF8',brandRgb:'27,79,138', brightRgb:'46,124,201',tint:'#9CC6EE',glow:'#5AA9F2'},
+  petroleo:{label:'Petróleo', ink:'#0F1F24',ink2:'#173039',brand:'#0E5E6B',bright:'#1495A6',soft:'#E0F1F3',brandRgb:'14,94,107', brightRgb:'20,149,166',tint:'#84DCE6',glow:'#34CFDE'},
+  roxo:    {label:'Roxo',     ink:'#191425',ink2:'#251E36',brand:'#5B3A9E',bright:'#7C53D6',soft:'#EDE7F9',brandRgb:'91,58,158', brightRgb:'124,83,214',tint:'#C3ADF2',glow:'#A07CF5'},
+  vinho:   {label:'Vinho',    ink:'#231318',ink2:'#331C24',brand:'#8E2647',bright:'#C2406A',soft:'#F9E7ED',brandRgb:'142,38,71', brightRgb:'194,64,106',tint:'#F0A7BE',glow:'#F2729A'},
+  vermelho:{label:'Vermelho', ink:'#271211',ink2:'#381C1A',brand:'#A02218',bright:'#CE3A30',soft:'#FBE7E4',brandRgb:'160,34,24', brightRgb:'206,58,48', tint:'#F2A49B',glow:'#FF7A6B'},
+  grafite: {label:'Grafite',  ink:'#16181C',ink2:'#21252B',brand:'#39434E',bright:'#5B6B7D',soft:'#EAEDF0',brandRgb:'57,67,78',  brightRgb:'91,107,125',tint:'#BBC7D4',glow:'#93A7BB'}
+};
+function applyTheme(name){
+  const t=THEMES[name]||THEMES.verde;
+  const r=document.documentElement.style;
+  r.setProperty('--ink',t.ink);r.setProperty('--ink-2',t.ink2);
+  r.setProperty('--brand',t.brand);r.setProperty('--brand-bright',t.bright);r.setProperty('--brand-soft',t.soft);
+  r.setProperty('--brand-rgb',t.brandRgb);r.setProperty('--bright-rgb',t.brightRgb);
+  r.setProperty('--accent-tint',t.tint);r.setProperty('--accent-glow',t.glow);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t.brand);
+  const ic=document.querySelector('link[rel="icon"]');
+  if(ic)ic.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23"+t.brand.slice(1)+"'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='monospace'>R$</text></svg>";
+}
+function themePickerHTML(){
+  const cur=S.settings.theme||'verde';
+  return `<div class="theme-grid">${Object.entries(THEMES).map(([k,t])=>`
+    <button class="theme-sw ${cur===k?'on':''}" data-t="${k}" onclick="setTheme('${k}')" style="position:relative">
+      <span class="tcheck"><svg viewBox="0 0 24 24" fill="none" stroke="${t.bright}" stroke-width="4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+      <span class="tprev" style="background:linear-gradient(125deg,${t.ink} 0 46%,${t.brand} 46% 72%,${t.bright} 72% 100%)"></span>
+      <small>${t.label}</small>
+    </button>`).join('')}</div>`;
+}
+function setTheme(k){
+  if(!THEMES[k])return;
+  S.settings.theme=k;save('settings');applyTheme(k);
+  document.querySelectorAll('.theme-sw').forEach(b=>b.classList.toggle('on',b.dataset.t===k));
+  toast('Cor do sistema: '+THEMES[k].label);
+}
+function openThemeModal(){
+  openModal('Cor do sistema',
+    `<p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:14px">A cor vale para este dispositivo e já aparece na tela de login. Toque para aplicar na hora.</p>`+themePickerHTML(),
+    `<button class="btn btn-primary" onclick="closeModal()">Pronto</button>`);
+}
+
+/* ---------- MODAL GENÉRICO ---------- */
+function openModal(title,bodyHTML,footHTML,large=false){
+  $('modalTitle').textContent=title;$('modalBody').innerHTML=bodyHTML;$('modalFoot').innerHTML=footHTML||'';
+  $('modalFoot').style.display=footHTML?'flex':'none';
+  $('modalBox').className='modal'+(large?' lg':'');$('modalBg').classList.add('on');
+}
+function closeModal(){$('modalBg').classList.remove('on');payState=null}
+$('modalBg')?.addEventListener('click',e=>{if(e.target.id==='modalBg')closeModal()});
+function askConfirm(title,msg,okLabel,cb,danger=true){
+  openModal(title,`<p style="font-size:.92rem;line-height:1.55;color:var(--txt-soft)">${msg}</p>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn ${danger?'btn-danger':'btn-money'}" id="cfBtn">${esc(okLabel)}</button>`);
+  $('cfBtn').onclick=()=>{closeModal();cb()};
+}
+
+/* ---------- PERMISSÕES ---------- */
+const PERMS={
+  admin:{produtos:1,clientes:1,relatorios:1,config:1,edit_prod:1,cancel_sale:1},
+  operador:{produtos:1,clientes:1,relatorios:0,config:0,edit_prod:0,cancel_sale:0}
+};
+const can=p=>!!(session&&PERMS[session.role]&&PERMS[session.role][p]);
+
+/* ---------- AUTENTICAÇÃO ---------- */
+async function ensureAdmin(){
+  if(S.users.length===0){
+    S.users.push({id:uid(),name:'Administrador',user:'admin',hash:await sha256('admin123'),role:'admin',mustChange:true});
+    save('users');
+  }
+}
+async function doLogin(){
+  const u=$('loginUser').value.trim().toLowerCase(),p=$('loginPass').value;
+  if(!u||!p)return toast('Informe usuário e senha','warn');
+  const h=await sha256(p);
+  const found=S.users.find(x=>x.user===u&&x.hash===h);
+  if(!found)return toast('Usuário ou senha incorretos','err');
+  session={id:found.id,name:found.name,user:found.user,role:found.role};
+  DB.set('session',session);
+  enterApp();
+  if(found.mustChange)toast('Por segurança, troque a senha padrão em Configurações','warn');
+}
+function logout(){
+  session=null;DB.del('session');
+  $('app').classList.remove('on');$('loginScreen').style.display='flex';
+  $('loginUser').value='';$('loginPass').value='';
+}
+function enterApp(){
+  $('loginScreen').style.display='none';$('app').classList.add('on');
+  $('userName').textContent=session.name;
+  $('userRole').textContent=session.role==='admin'?'Administrador':'Operador de caixa';
+  $('userAvatar').textContent=(session.name[0]||'?').toUpperCase();
+  document.querySelectorAll('[data-perm]').forEach(el=>{el.style.display=can(el.dataset.perm)?'':'none'});
+  document.querySelectorAll('[data-perm-act]').forEach(el=>{el.style.display=can(el.dataset.permAct)?'':'none'});
+  applyStoreName();updateCashPill();go('pdv');
+}
+function applyStoreName(){
+  const n=S.settings.storeName||'PinhoPDV';
+  $('sbStoreName').innerHTML=esc(n)+'<small>ponto de venda</small>';
+  $('loginStoreName').innerHTML=esc(n)+'<small>sistema de ponto de venda</small>';
+  document.title=n+' · PDV';
+}
+
+/* ---------- NAVEGAÇÃO ---------- */
+function go(scr){
+  if(['produtos','clientes','relatorios','config'].includes(scr)&&!can(scr==='produtos'?'produtos':scr==='clientes'?'clientes':scr))return toast('Sem permissão para esta área','warn');
+  currentScreen=scr;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id==='screen-'+scr));
+  document.querySelectorAll('.nav-item,.mb-item').forEach(b=>b.classList.toggle('on',b.dataset.go===scr));
+  toggleSidebar(false);
+  ({pdv:renderPDV,produtos:renderProducts,clientes:renderCustomers,vendas:renderSales,caixa:renderCash,relatorios:renderReports,config:renderConfig})[scr]?.();
+  if(scr==='pdv'&&window.innerWidth>920)setTimeout(()=>$('pdvSearch').focus(),60);
+}
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+function toggleSidebar(open){$('sidebar').classList.toggle('open',open);$('sbBackdrop').classList.toggle('on',open)}
+
+/* ============================================================
+   FRENTE DE CAIXA
+   ============================================================ */
+function openCash(){return S.cashSessions.find(c=>c.status==='open')}
+function effPrice(p,qty){ // preço efetivo: atacado > promoção > normal
+  if(p.wQty&&p.wPrice>0&&qty>=p.wQty)return{v:p.wPrice,tag:'atacado'};
+  if(p.promo>0&&p.promo<p.price)return{v:p.promo,tag:'promo'};
+  return{v:p.price,tag:null};
+}
+function expDays(p){if(!p.expiry)return null;return Math.ceil((new Date(p.expiry+'T23:59:59')-Date.now())/864e5)}
+function expChip(p){
+  const d=expDays(p);if(d===null)return'';
+  if(d<0)return' <span class="chip chip-bad">vencido</span>';
+  if(d<=30)return` <span class="chip chip-warn">vence em ${d}d</span>`;
+  return'';
+}
+function renderPDV(){
+  refreshHoldsBadge();
+  $('cashBlock').style.display=openCash()?'none':'flex';
+  renderCats();renderProdGrid();renderTicket();
+}
+function renderCats(){
+  const cats=[...new Set(S.products.map(p=>p.cat).filter(Boolean))].sort();
+  $('catRow').innerHTML=`<button class="cat-pill ${activeCat==='__all'?'on':''}" onclick="setCat('__all')">Todos</button>`+
+    cats.map(c=>`<button class="cat-pill ${activeCat===c?'on':''}" onclick="setCat('${esc(c).replace(/'/g,"\\'")}')">${esc(c)}</button>`).join('');
+}
+function setCat(c){activeCat=c;renderCats();renderProdGrid()}
+function renderProdGrid(){
+  const q=$('pdvSearch').value.trim().toLowerCase().replace(/^\d+\*/,'');
+  let list=S.products.filter(p=>p.active!==false);
+  if(activeCat!=='__all')list=list.filter(p=>p.cat===activeCat);
+  if(q)list=list.filter(p=>p.name.toLowerCase().includes(q)||String(p.code||'').toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q));
+  if(!S.products.length){
+    $('prodGrid').innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="big">📦</div><p>Nenhum produto cadastrado ainda.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      ${can('edit_prod')?`<button class="btn btn-primary btn-sm" onclick="go('produtos');openProdModal()">+ Cadastrar produto</button>
+      <button class="btn btn-ghost btn-sm" onclick="seedDemo()">Carregar exemplos</button>`:'<span>Peça ao administrador para cadastrar produtos.</span>'}</div></div>`;
+    return;
+  }
+  $('prodGrid').innerHTML=list.slice(0,200).map(p=>{
+    const out=p.stock<=0,low=!out&&p.stock<=(p.minStock||0);
+    return `<button class="prod-tile ${out?'out':''} ${low?'low':''}" onclick="addToTicket('${p.id}')">
+      <span class="nm">${esc(p.name)}</span>
+      <span class="st">${out?'esgotado':'estoque: '+p.stock}${expDays(p)!==null&&expDays(p)<0?' · <b style="color:var(--danger)">vencido</b>':''}</span>
+      <span class="pr money">${p.promo>0&&p.promo<p.price?`<s style="opacity:.5;font-size:.72em">${fmt(p.price)}</s> ${fmt(p.promo)}`:fmt(p.price)}</span></button>`;
+  }).join('')||`<div class="empty" style="grid-column:1/-1"><p>Nenhum produto encontrado para "<b>${esc(q)}</b>".</p></div>`;
+}
+let _scanStream=null,_scanLoop=null,_scanCtx='pdv',_scanDet=null;
+async function openScanner(ctx){
+  _scanCtx=ctx;
+  if(!('BarcodeDetector' in window)){
+    return askConfirm('Leitor não disponível neste aparelho',
+      'Este navegador não tem leitor de código embutido. <b>No celular, use o Chrome (Android) ou Safari atualizado.</b><br><br>Você ainda pode parear um leitor Bluetooth (funciona como teclado) ou digitar o código.',
+      'Entendi',()=>closeModal(),false);
+  }
+  if(!navigator.mediaDevices?.getUserMedia)return toast('Câmera indisponível neste navegador','err');
+  $('scanModal').classList.add('on');
+  try{
+    _scanDet=_scanDet||new window.BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','codabar']});
+    _scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const v=$('scanVideo');v.srcObject=_scanStream;await v.play();
+    scanTick();
+  }catch(err){
+    closeScanner();
+    toast(err.name==='NotAllowedError'?'Permissão de câmera negada':'Não foi possível abrir a câmera','err');
+  }
+}
+async function scanTick(){
+  const v=$('scanVideo');
+  if(!_scanStream||!v||v.readyState<2){_scanLoop=requestAnimationFrame(scanTick);return}
+  try{
+    const codes=await _scanDet.detect(v);
+    if(codes&&codes.length){
+      const code=codes[0].rawValue;
+      if(navigator.vibrate)navigator.vibrate(90);
+      onScanResult(code);return;
+    }
+  }catch(e){}
+  _scanLoop=requestAnimationFrame(scanTick);
+}
+function onScanResult(code){
+  const p=S.products.find(x=>String(x.code||'')===String(code));
+  if(_scanCtx==='prod'){
+    closeScanner();
+    if($('pCode')){$('pCode').value=code;toast('Código capturado: '+code)}
+    return;
+  }
+  if(p){addToTicket(p.id,1);toast('+ '+p.name);
+    // continua lendo para vendas rápidas em sequência
+    _scanLoop=requestAnimationFrame(scanTick);
+  }else{
+    closeScanner();
+    $('pdvSearch').value=code;
+    askConfirm('Produto não encontrado','Nenhum produto com o código <b>'+esc(code)+'</b>. Deseja cadastrar agora?','Cadastrar',()=>{closeModal();go('produtos');setTimeout(()=>{openProdModal();setTimeout(()=>{if($('pCode'))$('pCode').value=code},120)},80)});
+  }
+}
+function closeScanner(){
+  $('scanModal').classList.remove('on');
+  if(_scanLoop)cancelAnimationFrame(_scanLoop);_scanLoop=null;
+  if(_scanStream){_scanStream.getTracks().forEach(t=>t.stop());_scanStream=null}
+}
+function pdvSearchKey(e){
+  if(e.key!=='Enter')return;
+  const raw=$('pdvSearch').value.trim();if(!raw)return;
+  let qty=1,term=raw;
+  const m=raw.match(/^(\d+)\*(.+)$/);          // padrão PDV: 3*7891000100
+  if(m){qty=Math.max(1,parseInt(m[1]));term=m[2].trim()}
+  const t=term.toLowerCase();
+  const exact=S.products.find(p=>String(p.code||'').toLowerCase()===t&&p.active!==false);
+  const list=S.products.filter(p=>p.active!==false&&(p.name.toLowerCase().includes(t)||String(p.code||'').toLowerCase().includes(t)));
+  const pick=exact||(list.length===1?list[0]:null);
+  if(pick){addToTicket(pick.id,qty);$('pdvSearch').value='';renderProdGrid()}
+  else if(!list.length)toast('Produto não encontrado','warn');
+}
+function addToTicket(pid,qty=1){
+  if(!openCash())return toast('Abra o caixa antes de vender','warn');
+  const p=S.products.find(x=>x.id===pid);if(!p)return;
+  const line=ticket.items.find(i=>i.pid===pid);
+  const inCart=line?line.qty:0;
+  if(p.stock-inCart-qty<0){
+    if(!S.settings.allowNoStock)return toast('Estoque insuficiente de '+p.name,'err');
+    toast('Atenção: vendendo sem estoque ('+p.name+')','warn');
+  }
+  const ed=expDays(p);
+  if(ed!==null&&ed<0)toast('Atenção: '+p.name+' está VENCIDO','err');
+  if(line)line.qty+=qty;else ticket.items.push({pid,name:p.name,price:p.price,qty});
+  renderTicket();
+}
+function chQty(pid,d){
+  const l=ticket.items.find(i=>i.pid===pid);if(!l)return;
+  l.qty+=d;if(l.qty<=0)ticket.items=ticket.items.filter(i=>i.pid!==pid);
+  renderTicket();
+}
+function rmItem(pid){ticket.items=ticket.items.filter(i=>i.pid!==pid);renderTicket()}
+function ticketCalc(){
+  ticket.items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid);if(p){const e=effPrice(p,i.qty);i.price=e.v;i.tag=e.tag}});
+  const sub=ticket.items.reduce((a,i)=>a+i.price*i.qty,0);
+  let disc=ticket.discType==='%'?sub*(ticket.discValue/100):ticket.discValue;
+  disc=Math.min(disc,sub);
+  return{sub,disc,total:Math.max(0,sub-disc)};
+}
+function renderTicket(){
+  const c=ticketCalc();
+  const n=ticket.items.reduce((a,i)=>a+i.qty,0);
+  $('ticketCount').textContent=n+(n===1?' item':' itens');
+  $('ticketItems').innerHTML=ticket.items.length?ticket.items.map(i=>`
+    <div class="ti">
+      <div class="info"><div class="nm">${esc(i.name)}${i.tag?` <span class="chip chip-ok" style="font-size:.62rem;padding:1px 7px">${i.tag}</span>`:''}</div><div class="un money">${i.qty} × ${fmt(i.price)}</div></div>
+      <div class="qty-ctl"><button onclick="chQty('${i.pid}',-1)">−</button><span class="q">${i.qty}</span><button onclick="chQty('${i.pid}',1)">+</button></div>
+      <div class="tot money">${fmt(i.price*i.qty)}</div>
+      <button class="rm" onclick="rmItem('${i.pid}')" title="Remover">✕</button>
+    </div>`).join(''):
+    `<div class="ticket-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2 12h11l2-8H7"/><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/></svg><p>Cupom vazio.<br>Busque um produto ou toque na grade ao lado.</p></div>`;
+  $('ticketTotals').innerHTML=`
+    <div class="tt-row"><span>Subtotal</span><span class="money">${fmt(c.sub)}</span></div>
+    ${c.disc>0?`<div class="tt-row disc"><span>Desconto ${ticket.discType==='%'?'('+ticket.discValue+'%)':''}<button onclick="rmDiscount()">remover</button></span><span class="money">− ${fmt(c.disc)}</span></div>`:''}`;
+  $('visorTotal').textContent=fmt(c.total);
+  $('btnCharge').disabled=!ticket.items.length;
+  const cust=S.customers.find(x=>x.id===ticket.customerId);
+  $('ticketCustName').textContent=cust?cust.name:'Consumidor final';
+  $('ticketCustBtn').textContent=cust?'trocar':'vincular cliente';
+}
+function rmDiscount(){ticket.discValue=0;renderTicket()}
+function cancelTicket(){
+  if(!ticket.items.length)return;
+  askConfirm('Cancelar venda','Todos os itens do cupom atual serão descartados.','Cancelar venda',()=>{
+    ticket={items:[],discType:'%',discValue:0,customerId:null};renderTicket();toast('Venda cancelada');
+  });
+}
+/* ---------- VENDAS EM ESPERA (COMANDA) ---------- */
+function refreshHoldsBadge(){
+  const b=$('holdsBadge');if(!b)return;
+  b.style.display=S.holds.length?'inline-block':'none';
+  b.textContent='⏸ '+S.holds.length;
+}
+function holdTicket(){
+  if(!ticket.items.length)return toast('O cupom está vazio','warn');
+  openModal('Colocar venda em espera',`
+    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:12px">A venda fica guardada (mesmo se fechar o app) e o caixa libera para o próximo cliente. O estoque só baixa quando a venda for finalizada.</p>
+    <div class="field"><label>Identificação *</label><input class="inp" id="holdName" placeholder="Ex.: Mesa 3, João, Balcão 2" onkeydown="if(event.key==='Enter')confirmHold()"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="confirmHold()">Guardar venda</button>`);
+  setTimeout(()=>$('holdName').focus(),60);
+}
+function confirmHold(){
+  const name=$('holdName').value.trim();
+  if(!name)return toast('Dê um nome para identificar','warn');
+  const c=ticketCalc();
+  S.holds.push({id:uid(),name,items:JSON.parse(JSON.stringify(ticket.items)),discType:ticket.discType,discValue:ticket.discValue,customerId:ticket.customerId,total:c.total,at:new Date().toISOString(),userName:session.name});
+  save('holds');
+  ticket={items:[],discType:'%',discValue:0,customerId:null};
+  closeModal();renderTicket();refreshHoldsBadge();
+  toast('Venda "'+name+'" em espera');
+}
+function openHolds(){
+  if(!S.holds.length)return toast('Nenhuma venda em espera','warn');
+  openModal('Vendas em espera ('+S.holds.length+')',
+    S.holds.map(hd=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)">
+      <div style="flex:1;min-width:0"><b>${esc(hd.name)}</b><br><span style="font-size:.76rem;color:var(--txt-soft)">${hd.items.reduce((a,i)=>a+i.qty,0)} item(ns) · ${timeStr(hd.at)} · ${esc(hd.userName)}</span></div>
+      <span class="money" style="font-weight:700">${fmt(hd.total)}</span>
+      <button class="btn btn-money btn-sm" onclick="resumeHold('${hd.id}')">Recuperar</button>
+      <button class="icon-btn del" title="Descartar" onclick="delHold('${hd.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>`).join(''),
+    `<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>`,true);
+}
+function resumeHold(id){
+  const hd=S.holds.find(x=>x.id===id);if(!hd)return;
+  const carregar=()=>{
+    ticket={items:hd.items,discType:hd.discType,discValue:hd.discValue,customerId:hd.customerId};
+    S.holds=S.holds.filter(x=>x.id!==id);save('holds');
+    closeModal();renderTicket();refreshHoldsBadge();go('pdv');
+    toast('Venda "'+hd.name+'" recuperada');
+  };
+  if(ticket.items.length)askConfirm('Substituir cupom atual?','O cupom atual tem itens. Eles serão <b>descartados</b> para carregar a venda em espera. Se quiser mantê-los, coloque-os em espera primeiro.','Substituir',carregar);
+  else carregar();
+}
+function delHold(id){
+  const hd=S.holds.find(x=>x.id===id);
+  askConfirm('Descartar venda em espera',`A venda <b>${esc(hd.name)}</b> (${fmt(hd.total)}) será descartada. Nenhum estoque é alterado.`,'Descartar',()=>{
+    S.holds=S.holds.filter(x=>x.id!==id);save('holds');refreshHoldsBadge();
+    if(S.holds.length)openHolds();else closeModal();
+    toast('Venda descartada');
+  });
+}
+function openDiscountModal(){
+  if(!ticket.items.length)return toast('Adicione itens primeiro','warn');
+  openModal('Desconto na venda',`
+    <div class="seg" id="dSeg"><button class="${ticket.discType==='%'?'on':''}" onclick="dType('%')">Porcentagem %</button><button class="${ticket.discType==='$'?'on':''}" onclick="dType('$')">Valor R$</button></div>
+    <div class="field" style="margin-top:16px"><label>Valor do desconto</label><input class="inp money" id="dVal" inputmode="decimal" value="${ticket.discValue||''}" placeholder="0,00" onkeydown="if(event.key==='Enter')applyDiscount()"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="applyDiscount()">Aplicar desconto</button>`);
+  setTimeout(()=>$('dVal').focus(),60);
+}
+let _dType=null;
+function dType(t){_dType=t;document.querySelectorAll('#dSeg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(t==='%')))}
+function applyDiscount(){
+  if(_dType)ticket.discType=_dType;_dType=null;
+  ticket.discValue=parseMoney($('dVal').value);
+  if(ticket.discType==='%'&&ticket.discValue>100)ticket.discValue=100;
+  closeModal();renderTicket();
+}
+function openCustPicker(){
+  const rows=S.customers.map(c=>`<button class="pay-line" style="width:100%;text-align:left" onclick="pickCust('${c.id}')"><span>${esc(c.name)}</span><span style="color:var(--txt-soft);font-size:.76rem">${esc(c.phone||'')}</span></button>`).join('');
+  openModal('Vincular cliente',`
+    <div class="field"><input class="inp" id="cpSearch" placeholder="Buscar cliente…" oninput="filterCustPicker()"></div>
+    <div id="cpList" style="max-height:46vh;overflow-y:auto">${rows||'<p style="color:var(--txt-soft);font-size:.88rem;text-align:center;padding:18px">Nenhum cliente cadastrado.</p>'}</div>`,
+    `<button class="btn btn-ghost" onclick="pickCust(null)">Consumidor final</button><button class="btn btn-primary" onclick="closeModal();go('clientes');openCustModal()">+ Novo cliente</button>`);
+}
+function filterCustPicker(){
+  const q=$('cpSearch').value.toLowerCase();
+  $('cpList').innerHTML=S.customers.filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q))
+    .map(c=>`<button class="pay-line" style="width:100%;text-align:left" onclick="pickCust('${c.id}')"><span>${esc(c.name)}</span><span style="color:var(--txt-soft);font-size:.76rem">${esc(c.phone||'')}</span></button>`).join('')||'<p style="color:var(--txt-soft);text-align:center;padding:14px;font-size:.86rem">Nada encontrado.</p>';
+}
+function pickCust(id){ticket.customerId=id;closeModal();renderTicket()}
+
+/* ============================================================
+   PAGAMENTO E FINALIZAÇÃO
+   ============================================================ */
+const PAY_METHODS=[
+  {id:'dinheiro',label:'Dinheiro',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M5 9h.01M19 15h.01"/></svg>'},
+  {id:'pix',label:'PIX',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2.5l4.2 4.2-4.2 4.2-4.2-4.2zM12 13.1l4.2 4.2-4.2 4.2-4.2-4.2zM2.5 12l4.2-4.2L10.9 12l-4.2 4.2zM13.1 12l4.2-4.2L21.5 12l-4.2 4.2z"/></svg>'},
+  {id:'credito',label:'Crédito',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>'},
+  {id:'debito',label:'Débito',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M16 15h2"/></svg>'}
+];
+const payLabel=id=>PAY_METHODS.find(m=>m.id===id)?.label||id;
+function openPayModal(){
+  if(!ticket.items.length)return;
+  if(!openCash())return toast('Abra o caixa antes de cobrar','warn');
+  const c=ticketCalc();
+  payState={total:c.total,payments:[],method:'dinheiro'};
+  openModal('Receber pagamento',`
+    <div class="pay-total-strip"><span class="lb">Total a pagar</span><span class="money" id="payTotalShow">${fmt(c.total)}</span></div>
+    <label style="font-size:.74rem;font-weight:700;color:var(--txt-soft);text-transform:uppercase;letter-spacing:.07em">Forma de pagamento</label>
+    <div class="pay-methods" style="margin-top:8px">${PAY_METHODS.map(m=>`<button class="pm ${m.id==='dinheiro'?'on':''}" id="pm-${m.id}" onclick="payMethod('${m.id}')">${m.icon}${m.label}</button>`).join('')}</div>
+    <div class="field"><label>Valor recebido nesta forma</label><input class="inp money" id="payAmount" inputmode="decimal" style="font-size:1.15rem;font-weight:600" onkeydown="if(event.key==='Enter')addPayment()">
+      <div class="quick-cash" id="quickCash"></div></div>
+    <div id="pixArea" style="display:none"></div>
+    <button class="btn btn-ghost btn-block btn-sm" onclick="addPayment()">+ Adicionar pagamento</button>
+    <div class="pay-list" id="payList"></div>
+    <div id="payStatus"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-money" id="payFinish" onclick="finishSale()" disabled>Finalizar venda</button>`,true);
+  refreshPay();
+  setTimeout(()=>{$('payAmount').focus();$('payAmount').select()},80);
+}
+function payMethod(id){
+  payState.method=id;
+  PAY_METHODS.forEach(m=>$('pm-'+m.id).classList.toggle('on',m.id===id));
+  refreshPay(false);
+  $('payAmount').focus();$('payAmount').select();
+}
+function payRemaining(){return Math.max(0,payState.total-payState.payments.reduce((a,p)=>a+p.amount,0))}
+function refreshPay(resetInput=true){
+  const rem=payRemaining();
+  if(resetInput)$('payAmount').value=rem>0?fmtN(rem):'';
+  // notas rápidas só para dinheiro
+  const qc=$('quickCash');
+  if(payState.method==='dinheiro'&&rem>0){
+    const opts=[...new Set([Math.ceil(rem),Math.ceil(rem/5)*5,Math.ceil(rem/10)*10,Math.ceil(rem/50)*50,Math.ceil(rem/100)*100])].filter(v=>v>=rem).slice(0,5);
+    qc.innerHTML=opts.map(v=>`<button onclick="$('payAmount').value='${fmtN(v)}'">${fmt(v)}</button>`).join('');
+  }else qc.innerHTML='';
+  const pa=$('pixArea');
+  if(pa){
+    if(payState.method==='pix'&&rem>0){
+      const pl=pixPayload(rem);
+      pa.style.display='block';
+      pa.innerHTML=pl?`<div style="text-align:center;background:var(--brand-soft);border-radius:12px;padding:14px;margin:4px 0 10px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--brand);margin-bottom:8px">Cliente paga ${fmt(rem)} via PIX</div>
+        <div style="background:#fff;display:inline-block;padding:8px;border-radius:8px;line-height:0">${qrSVG(pl,180)}</div>
+        <button class="btn btn-ghost btn-sm btn-block" style="margin-top:10px" onclick="copyPix('${pl}')">📋 Copiar código PIX (copia e cola)</button>
+        <p style="font-size:.72rem;color:var(--txt-soft);margin-top:6px">Confirme o recebimento no app do banco antes de finalizar.</p></div>`
+        :`<div style="background:var(--warm-soft);border-radius:10px;padding:11px;font-size:.82rem;color:#8A5A14;margin:4px 0 10px">Cadastre sua <b>chave PIX</b> em Configurações para gerar o QR Code aqui.</div>`;
+    }else pa.style.display='none';
+  }
+  $('payList').innerHTML=payState.payments.map((p,i)=>`<div class="pay-line"><span>${payLabel(p.method)}</span><span><span class="money">${fmt(p.amount)}</span><button onclick="rmPayment(${i})">remover</button></span></div>`).join('');
+  const paid=payState.payments.reduce((a,p)=>a+p.amount,0);
+  const cash=payState.payments.filter(p=>p.method==='dinheiro').reduce((a,p)=>a+p.amount,0);
+  const troco=paid>payState.total?paid-payState.total:0;
+  let html='';
+  if(rem>0)html=`<div class="pay-status"><span>Falta receber</span><span class="money" style="color:var(--danger)">${fmt(rem)}</span></div>`;
+  else if(troco>0)html=`<div class="pay-status troco"><span>Troco a devolver</span><span class="money">${fmt(troco)}</span></div>`;
+  else html=`<div class="pay-status"><span>Pago</span><span class="money" style="color:var(--brand-bright)">✓ ${fmt(paid)}</span></div>`;
+  $('payStatus').innerHTML=html;
+  const okTroco=troco===0||troco<=cash;   // troco só pode sair de dinheiro
+  $('payFinish').disabled=!(rem<=0&&okTroco&&payState.payments.length);
+  if(troco>0&&!okTroco)$('payStatus').innerHTML+=`<p style="font-size:.76rem;color:var(--danger);margin-top:6px">Troco maior que o valor recebido em dinheiro. Ajuste os pagamentos.</p>`;
+}
+function addPayment(){
+  const v=parseMoney($('payAmount').value);
+  if(v<=0)return toast('Informe um valor válido','warn');
+  const rem=payRemaining();
+  if(payState.method!=='dinheiro'&&v>rem+0.001)return toast('Em '+payLabel(payState.method)+' não é possível receber mais que o restante','warn');
+  payState.payments.push({method:payState.method,amount:Math.round(v*100)/100});
+  refreshPay();
+}
+function copyPix(code){
+  const ok=()=>toast('Código PIX copiado ✓');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(ok).catch(()=>{const t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();ok()})}
+  else{const t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();ok()}
+}
+function rmPayment(i){payState.payments.splice(i,1);refreshPay()}
+function finishSale(){
+  const c=ticketCalc();
+  const paid=payState.payments.reduce((a,p)=>a+p.amount,0);
+  const change=Math.round((paid-c.total)*100)/100;
+  S.seq.sale++;save('seq');
+  const cust=S.customers.find(x=>x.id===ticket.customerId);
+  const sale={
+    id:uid(),num:S.seq.sale,date:new Date().toISOString(),
+    items:ticket.items.map(i=>({...i})),
+    subtotal:c.sub,discount:c.disc,total:c.total,
+    payments:payState.payments,change,
+    customerId:ticket.customerId,customerName:cust?cust.name:null,
+    userId:session.id,userName:session.name,
+    cashId:openCash().id,status:'ok'
+  };
+  S.sales.push(sale);save('sales');
+  // baixa de estoque
+  sale.items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid);if(p){p.stock-=i.qty}});
+  save('products');
+  const t=change>0?{c:change}:null;
+  ticket={items:[],discType:'%',discValue:0,customerId:null};
+  renderTicket();updateCashPill();
+  if(S.settings.autoPrint)setTimeout(()=>printReceipt(sale.id),120);
+  openModal('Venda concluída',`
+    <div class="sale-done">
+      <div class="ok-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <h3>Venda registrada!</h3><div class="num">Cupom nº ${String(sale.num).padStart(4,'0')} · ${fmt(sale.total)}</div>
+      ${t?`<div class="troco-big"><span class="lb">Troco do cliente</span><span class="money">${fmt(t.c)}</span></div>`:''}
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal();$('pdvSearch').focus()">Nova venda</button><button class="btn btn-primary" onclick="printReceipt('${sale.id}')">🖨 Imprimir cupom</button>`);
+}
+
+/* ---------- CUPOM ---------- */
+function receiptHTML(sale){
+  const st=S.settings;
+  return `<div class="receipt">
+    <div class="c b" style="font-size:13px">${esc(st.storeName||'PinhoPDV')}</div>
+    ${st.doc?`<div class="c">CNPJ/CPF: ${esc(st.doc)}</div>`:''}
+    ${st.address?`<div class="c">${esc(st.address)}</div>`:''}
+    ${st.phone?`<div class="c">Tel: ${esc(st.phone)}</div>`:''}
+    <hr><div class="c b">CUPOM NÃO FISCAL</div><hr>
+    <div class="row"><span>Cupom nº ${String(sale.num).padStart(4,'0')}</span><span>${dtStr(sale.date)}</span></div>
+    <div class="row"><span>Operador: ${esc(sale.userName)}</span></div>
+    ${sale.customerName?`<div class="row"><span>Cliente: ${esc(sale.customerName)}</span></div>`:''}
+    <hr>
+    ${sale.items.map(i=>`<div class="row"><span>${esc(i.name)}</span></div><div class="row"><span>&nbsp;&nbsp;${i.qty} x ${fmtN(i.price)}</span><span>${fmtN(i.price*i.qty)}</span></div>`).join('')}
+    <hr>
+    <div class="row"><span>Subtotal</span><span>${fmtN(sale.subtotal)}</span></div>
+    ${sale.discount>0?`<div class="row"><span>Desconto</span><span>-${fmtN(sale.discount)}</span></div>`:''}
+    <div class="tot-row"><span>TOTAL</span><span>R$ ${fmtN(sale.total)}</span></div>
+    <hr>
+    ${sale.payments.map(p=>`<div class="row"><span>${payLabel(p.method)}</span><span>${fmtN(p.amount)}</span></div>`).join('')}
+    ${sale.change>0?`<div class="row b"><span>Troco</span><span>${fmtN(sale.change)}</span></div>`:''}
+    ${(sale.refunds||[]).length?`<hr><div class="c b">DEVOLUÇÕES</div>${sale.refunds.map(r=>r.items.map(i=>`<div class="row"><span>− ${i.qty} × ${esc(i.name)}</span></div>`).join('')+`<div class="row b"><span>Devolvido em ${todayStr(r.date)}</span><span>-${fmtN(r.total)}</span></div>`).join('')}`:''}
+    ${sale.status==='canceled'?`<hr><div class="c b">*** VENDA CANCELADA ***</div>`:''}
+    <hr><div class="c">${esc(st.footer||'Obrigado pela preferência!')}</div>
+    <div class="c" style="margin-top:6px;font-size:9.5px;color:#777">— documento sem valor fiscal —</div>
+  </div>`;
+}
+function printReceipt(saleId){
+  const sale=S.sales.find(s=>s.id===saleId);if(!sale)return;
+  $('receiptPrint').innerHTML=receiptHTML(sale);
+  setTimeout(()=>window.print(),60);
+}
+function viewReceipt(saleId){
+  const sale=S.sales.find(s=>s.id===saleId);if(!sale)return;
+  openModal('Cupom nº '+String(sale.num).padStart(4,'0'),
+    `<div class="receipt-preview-wrap">${receiptHTML(sale)}</div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>
+     ${sale.status==='ok'&&can('cancel_sale')?`<button class="btn btn-danger" onclick="cancelSale('${sale.id}')">Estornar venda</button>`:''}
+     <button class="btn btn-primary" onclick="printReceipt('${sale.id}')">🖨 Imprimir</button>`,true);
+}
+
+/* ============================================================
+   PRODUTOS
+   ============================================================ */
+function renderProducts(){
+  const q=($('prodSearch').value||'').trim().toLowerCase();
+  let list=[...S.products].sort((a,b)=>a.name.localeCompare(b.name));
+  if(q)list=list.filter(p=>p.name.toLowerCase().includes(q)||String(p.code||'').toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q));
+  $('prodSub').textContent=S.products.length+' produtos · '+S.products.filter(p=>p.stock<=(p.minStock||0)).length+' com estoque baixo';
+  if(!list.length){$('prodTable').innerHTML=`<tr><td><div class="empty"><div class="big">📦</div><p>${S.products.length?'Nenhum produto encontrado.':'Nenhum produto cadastrado.'}</p>${!S.products.length&&can('edit_prod')?'<button class="btn btn-primary btn-sm" onclick="openProdModal()">+ Cadastrar primeiro produto</button> <button class="btn btn-ghost btn-sm" onclick="seedDemo()">Carregar exemplos</button>':''}</div></td></tr>`;return}
+  $('prodTable').innerHTML=`<thead><tr><th>Produto</th><th>Código</th><th>Categoria</th><th class="t-r">Preço</th><th class="t-r">Custo</th><th class="t-c">Estoque</th><th></th></tr></thead><tbody>`+
+  list.map(p=>{
+    const out=p.stock<=0,low=!out&&p.stock<=(p.minStock||0);
+    return `<tr style="${p.active===false?'opacity:.5':''}">
+    <td><b>${esc(p.name)}</b>${p.active===false?' <span class="chip chip-gray">inativo</span>':''}${expChip(p)}${p.wQty?` <span class="chip chip-gray">atac. ${p.wQty}+ ${fmtN(p.wPrice)}</span>`:''}</td>
+    <td class="money" style="font-size:.8rem;color:var(--txt-soft)">${esc(p.code||'—')}</td>
+    <td>${p.cat?`<span class="chip chip-gray">${esc(p.cat)}</span>`:'—'}</td>
+    <td class="t-r money">${p.promo>0?`<s style="opacity:.45">${fmt(p.price)}</s><br><b style="color:var(--brand)">${fmt(p.promo)}</b>`:fmt(p.price)}</td>
+    <td class="t-r money" style="color:var(--txt-soft)">${fmt(p.cost||0)}</td>
+    <td class="t-c">${out?`<span class="chip chip-bad">esgotado</span>`:low?`<span class="chip chip-warn">${p.stock} ⚠</span>`:`<span class="chip chip-ok">${p.stock}</span>`}</td>
+    <td class="t-r" style="white-space:nowrap">${can('edit_prod')?`
+      <button class="icon-btn" title="Editar" onclick="openProdModal('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3l4 4L8 20l-5 1 1-5z"/></svg></button>
+      <button class="icon-btn del" title="Excluir" onclick="delProduct('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>`:''}</td></tr>`}).join('')+'</tbody>';
+}
+function openProdModal(id){
+  if(!can('edit_prod'))return toast('Sem permissão','warn');
+  const p=id?S.products.find(x=>x.id===id):null;
+  const cats=[...new Set(S.products.map(x=>x.cat).filter(Boolean))];
+  openModal(p?'Editar produto':'Novo produto',`
+    <div class="form-grid">
+      <div class="field full"><label>Nome do produto *</label><input class="inp" id="pNome" value="${esc(p?.name||'')}" placeholder="Ex.: Coca-Cola lata 350ml"></div>
+      <div class="field"><label>Código de barras / SKU</label><div style="display:flex;gap:8px"><input class="inp money" id="pCode" value="${esc(p?.code||'')}" placeholder="789…" style="flex:1"><button type="button" class="scan-btn" onclick="openScanner('prod')" title="Ler com a câmera"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><path d="M3 12h18"/></svg></button></div></div>
+      <div class="field"><label>Categoria</label><input class="inp" id="pCat" value="${esc(p?.cat||'')}" list="catList" placeholder="Bebidas"><datalist id="catList">${cats.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+      <div class="field"><label>Preço de venda (R$) *</label><input class="inp money" id="pPreco" inputmode="decimal" value="${p?fmtN(p.price):''}" placeholder="0,00"></div>
+      <div class="field"><label>Custo (R$)</label><input class="inp money" id="pCusto" inputmode="decimal" value="${p?fmtN(p.cost||0):''}" placeholder="0,00"></div>
+      <div class="field"><label>Estoque atual</label><input class="inp money" id="pEst" type="number" value="${p?p.stock:0}"></div>
+      <div class="field"><label>Estoque mínimo (alerta)</label><input class="inp money" id="pMin" type="number" value="${p?(p.minStock||0):0}"></div>
+      <div class="field"><label>Preço promocional (R$)</label><input class="inp money" id="pPromo" inputmode="decimal" value="${p&&p.promo?fmtN(p.promo):''}" placeholder="vazio = sem promoção"></div>
+      <div class="field"><label>Validade</label><input class="inp" id="pVal" type="date" value="${p?.expiry||''}"></div>
+      <div class="field"><label>Atacado: a partir de (un)</label><input class="inp money" id="pWQty" type="number" min="2" value="${p?.wQty||''}" placeholder="ex.: 6"></div>
+      <div class="field"><label>Atacado: preço unitário (R$)</label><input class="inp money" id="pWPrice" inputmode="decimal" value="${p&&p.wPrice?fmtN(p.wPrice):''}" placeholder="0,00"></div>
+      ${p?`<div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="pAtivo" ${p.active!==false?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Produto ativo (aparece no caixa)</label></div>`:''}
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="saveProduct('${id||''}')">${p?'Salvar alterações':'Cadastrar produto'}</button>`,true);
+  setTimeout(()=>$('pNome').focus(),60);
+}
+function saveProduct(id){
+  const name=$('pNome').value.trim(),price=parseMoney($('pPreco').value);
+  if(!name)return toast('Informe o nome do produto','warn');
+  if(price<=0)return toast('Informe o preço de venda','warn');
+  const code=$('pCode').value.trim();
+  if(code&&S.products.some(p=>p.code===code&&p.id!==id))return toast('Já existe um produto com este código','err');
+  const promo=parseMoney($('pPromo').value),wQty=parseInt($('pWQty').value)||0,wPrice=parseMoney($('pWPrice').value);
+  if(promo>0&&promo>=price)return toast('A promoção deve ser menor que o preço normal','warn');
+  if((wQty>0)!==(wPrice>0))return toast('Atacado: preencha a quantidade E o preço','warn');
+  if(wPrice>0&&wPrice>=price)return toast('O preço de atacado deve ser menor que o normal','warn');
+  const data={name,code,cat:$('pCat').value.trim(),price,cost:parseMoney($('pCusto').value),stock:parseInt($('pEst').value)||0,minStock:parseInt($('pMin').value)||0,promo,wQty,wPrice,expiry:$('pVal').value||''};
+  if(id){const p=S.products.find(x=>x.id===id);Object.assign(p,data,{active:$('pAtivo')?.checked!==false});toast('Produto atualizado')}
+  else{S.products.push({id:uid(),...data,active:true});toast('Produto cadastrado')}
+  save('products');closeModal();renderProducts();if(currentScreen==='pdv')renderPDV();
+}
+function delProduct(id){
+  const p=S.products.find(x=>x.id===id);
+  askConfirm('Excluir produto',`O produto <b>${esc(p.name)}</b> será removido do catálogo. As vendas já registradas são mantidas no histórico.`,'Excluir',()=>{
+    S.products=S.products.filter(x=>x.id!==id);save('products');renderProducts();toast('Produto excluído');
+  });
+}
+function seedDemo(){
+  if(!can('edit_prod'))return;
+  const demo=[
+    ['Coca-Cola lata 350ml','7894900011517','Bebidas',6,3.2,48,12],['Água mineral 500ml','7891910000197','Bebidas',3,1.1,60,15],
+    ['Suco de laranja 1L','7891000100103','Bebidas',9.5,5.5,20,6],['Pão francês (un)','2000000000017','Padaria',1.2,0.45,120,30],
+    ['Café coado (copo)','2000000000024','Padaria',4,1.2,999,0],['Salgado assado (un)','2000000000031','Padaria',7.5,3,35,10],
+    ['Chocolate barra 90g','7891008121019','Mercearia',8.9,5.1,25,8],['Arroz 5kg','7896004000019','Mercearia',27.9,21,14,5],
+    ['Sabonete 90g','7891150029500','Higiene',3.5,1.8,40,10],['Detergente 500ml','7891035617805','Limpeza',2.99,1.6,30,10]
+  ];
+  const ex=new Date(Date.now()+12*864e5).toISOString().slice(0,10);
+  const extra={'7894900011517':{promo:5.49},'7896004000019':{wQty:3,wPrice:25.9},'7891000100103':{expiry:ex}};
+  demo.forEach(d=>{if(!S.products.some(p=>p.code===d[1]))S.products.push({id:uid(),name:d[0],code:d[1],cat:d[2],price:d[3],cost:d[4],stock:d[5],minStock:d[6],active:true,promo:0,wQty:0,wPrice:0,expiry:'',...(extra[d[1]]||{})})});
+  save('products');renderPDV();renderProducts();toast('Produtos de exemplo carregados');
+}
+
+/* ============================================================
+   CLIENTES
+   ============================================================ */
+function custSpent(id){return S.sales.filter(s=>s.customerId===id&&s.status==='ok').reduce((a,s)=>a+s.total,0)}
+function renderCustomers(){
+  const q=($('custSearch').value||'').trim().toLowerCase();
+  let list=[...S.customers].sort((a,b)=>a.name.localeCompare(b.name));
+  if(q)list=list.filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.doc||'').includes(q));
+  $('custSub').textContent=S.customers.length+' clientes cadastrados';
+  if(!list.length){$('custTable').innerHTML=`<tr><td><div class="empty"><div class="big">👥</div><p>${S.customers.length?'Nenhum cliente encontrado.':'Nenhum cliente cadastrado ainda.'}</p><button class="btn btn-primary btn-sm" onclick="openCustModal()">+ Cadastrar cliente</button></div></td></tr>`;return}
+  $('custTable').innerHTML=`<thead><tr><th>Nome</th><th>Telefone</th><th>CPF/CNPJ</th><th class="t-r">Total comprado</th><th></th></tr></thead><tbody>`+
+  list.map(c=>`<tr><td><b>${esc(c.name)}</b>${c.email?`<div style="font-size:.76rem;color:var(--txt-soft)">${esc(c.email)}</div>`:''}</td>
+    <td>${esc(c.phone||'—')}</td><td class="money" style="font-size:.8rem">${esc(c.doc||'—')}</td>
+    <td class="t-r money">${fmt(custSpent(c.id))}</td>
+    <td class="t-r" style="white-space:nowrap">
+      <button class="icon-btn" title="Editar" onclick="openCustModal('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3l4 4L8 20l-5 1 1-5z"/></svg></button>
+      <button class="icon-btn del" title="Excluir" onclick="delCustomer('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button></td></tr>`).join('')+'</tbody>';
+}
+function openCustModal(id){
+  const c=id?S.customers.find(x=>x.id===id):null;
+  openModal(c?'Editar cliente':'Novo cliente',`
+    <div class="form-grid">
+      <div class="field full"><label>Nome completo *</label><input class="inp" id="cNome" value="${esc(c?.name||'')}" placeholder="Maria da Silva"></div>
+      <div class="field"><label>Telefone / WhatsApp</label><input class="inp" id="cFone" inputmode="tel" value="${esc(c?.phone||'')}" placeholder="(11) 99999-0000"></div>
+      <div class="field"><label>CPF / CNPJ</label><input class="inp money" id="cDoc" value="${esc(c?.doc||'')}" placeholder="000.000.000-00"></div>
+      <div class="field full"><label>E-mail</label><input class="inp" id="cMail" type="email" value="${esc(c?.email||'')}" placeholder="maria@email.com"></div>
+      <div class="field full"><label>Observações</label><input class="inp" id="cObs" value="${esc(c?.obs||'')}" placeholder="Preferências, endereço…"></div>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="saveCustomer('${id||''}')">${c?'Salvar alterações':'Cadastrar cliente'}</button>`,true);
+  setTimeout(()=>$('cNome').focus(),60);
+}
+function saveCustomer(id){
+  const name=$('cNome').value.trim();
+  if(!name)return toast('Informe o nome do cliente','warn');
+  const data={name,phone:$('cFone').value.trim(),doc:$('cDoc').value.trim(),email:$('cMail').value.trim(),obs:$('cObs').value.trim()};
+  if(id){Object.assign(S.customers.find(x=>x.id===id),data);toast('Cliente atualizado')}
+  else{S.customers.push({id:uid(),...data,createdAt:new Date().toISOString()});toast('Cliente cadastrado')}
+  save('customers');closeModal();renderCustomers();
+}
+function delCustomer(id){
+  const c=S.customers.find(x=>x.id===id);
+  askConfirm('Excluir cliente',`<b>${esc(c.name)}</b> será removido. O histórico de vendas dele é mantido.`,'Excluir',()=>{
+    S.customers=S.customers.filter(x=>x.id!==id);save('customers');renderCustomers();toast('Cliente excluído');
+  });
+}
+
+/* ============================================================
+   VENDAS (histórico)
+   ============================================================ */
+function salesInRange(filter){
+  const now=new Date();
+  return S.sales.filter(s=>{
+    if(filter==='all')return true;
+    if(filter==='hoje')return sameDay(s.date,now);
+    const days=parseInt(filter);
+    return (now-new Date(s.date))/(864e5)<=days;
+  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
+function renderSales(){
+  const f=$('salesFilter').value;
+  const list=salesInRange(f);
+  const ok=list.filter(s=>s.status==='ok');
+  $('salesSub').textContent=ok.length+' vendas · '+fmt(ok.reduce((a,s)=>a+netTotal(s),0))+' líquido';
+  if(!list.length){$('salesTable').innerHTML=`<tr><td><div class="empty"><div class="big">🧾</div><p>Nenhuma venda neste período.</p></div></td></tr>`;return}
+  $('salesTable').innerHTML=`<thead><tr><th>Cupom</th><th>Data</th><th>Cliente</th><th>Itens</th><th>Pagamento</th><th class="t-r">Total</th><th>Operador</th><th></th></tr></thead><tbody>`+
+  list.map(s=>`<tr style="${s.status==='canceled'?'opacity:.55':''}">
+    <td class="money"><b>#${String(s.num).padStart(4,'0')}</b>${s.status==='canceled'?' <span class="chip chip-bad">estornada</span>':(s.refunds&&s.refunds.length?' <span class="chip chip-warn">devolução</span>':'')}</td>
+    <td style="white-space:nowrap;font-size:.82rem">${dtStr(s.date)}</td>
+    <td>${esc(s.customerName||'Consumidor final')}</td>
+    <td class="t-c">${s.items.reduce((a,i)=>a+i.qty,0)}</td>
+    <td style="font-size:.8rem">${s.payments.map(p=>payLabel(p.method)).join(' + ')}</td>
+    <td class="t-r money"><b>${fmt(s.total)}</b>${refundTotal(s)>0?`<br><span style="font-size:.74rem;color:var(--danger)">− ${fmt(refundTotal(s))}</span>`:''}</td>
+    <td style="font-size:.82rem;color:var(--txt-soft)">${esc(s.userName)}</td>
+    <td class="t-r" style="white-space:nowrap">${s.status==='ok'&&can('cancel_sale')&&s.items.some(i=>i.qty>refundedQty(s,i.pid))?`<button class="icon-btn" title="Devolver itens" onclick="openRefundModal('${s.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 14l-5-5 5-5"/><path d="M4 9h11a5 5 0 015 5v3"/></svg></button>`:''}<button class="icon-btn" title="Ver cupom" onclick="viewReceipt('${s.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button></td></tr>`).join('')+'</tbody>';
+}
+function refundedQty(s,pid){return (s.refunds||[]).reduce((a,r)=>a+(r.items.find(i=>i.pid===pid)?.qty||0),0)}
+function refundTotal(s){return (s.refunds||[]).reduce((a,r)=>a+r.total,0)}
+function netTotal(s){return s.status==='ok'?s.total-refundTotal(s):0}
+function openRefundModal(id){
+  if(!can('cancel_sale'))return toast('Apenas administradores podem devolver itens','warn');
+  const s=S.sales.find(x=>x.id===id);if(!s||s.status!=='ok')return;
+  const fator=s.subtotal>0?(s.total/s.subtotal):1; // rateia o desconto da venda
+  const rows=s.items.map(i=>{
+    const rest=i.qty-refundedQty(s,i.pid);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line);${rest<=0?'opacity:.45':''}">
+      <div style="flex:1;min-width:0"><b>${esc(i.name)}</b><br><span style="font-size:.76rem;color:var(--txt-soft)" class="money">${i.qty} × ${fmtN(i.price)} · restam ${rest}</span></div>
+      <div class="qty-ctl"><button onclick="refStep('${i.pid}',-1)">−</button><span class="q" id="ref_${i.pid}" data-max="${rest}" data-pid="${i.pid}" data-price="${i.price}">0</span><button onclick="refStep('${i.pid}',1)">+</button></div>
+    </div>`}).join('');
+  const cash=openCash();
+  openModal('Devolver itens · cupom #'+String(s.num).padStart(4,'0'),
+    rows+`<div class="tt-row" style="padding:12px 2px 0;font-weight:700"><span>Valor a devolver</span><span class="money" id="refTotal">R$ 0,00</span></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.86rem"><input type="checkbox" id="refCash" ${cash?'checked':'disabled'} style="width:17px;height:17px;accent-color:var(--brand)"> Devolver dinheiro do caixa${cash?'':' <span class="chip chip-gray">caixa fechado</span>'}</label>
+    <p style="font-size:.78rem;color:var(--txt-soft);margin-top:8px">O valor considera o desconto dado na venda. Os itens devolvidos voltam ao estoque.</p>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-danger" onclick="confirmRefund('${s.id}',${fator})">Confirmar devolução</button>`,true);
+  _refSale=s.id;_refFator=fator;
+}
+function refStep(pid,d){
+  const el=$('ref_'+pid);if(!el)return;
+  let v=parseInt(el.textContent)+d;
+  v=Math.max(0,Math.min(parseInt(el.dataset.max),v));
+  el.textContent=v;refCalcTotal();
+}
+function refCalcTotal(){
+  let t=0;document.querySelectorAll('[id^="ref_"]').forEach(el=>{t+=parseInt(el.textContent)*parseFloat(el.dataset.price)});
+  const s=S.sales.find(x=>x.id===_refSale)||null;
+  $('refTotal').textContent=fmt(t*_refFator);
+}
+let _refSale=null,_refFator=1;
+function confirmRefund(id,fator){
+  const s=S.sales.find(x=>x.id===id);if(!s)return;
+  const items=[];let bruto=0;
+  document.querySelectorAll('[id^="ref_"]').forEach(el=>{
+    const q=parseInt(el.textContent);
+    if(q>0){items.push({pid:el.dataset.pid,qty:q,price:parseFloat(el.dataset.price),name:s.items.find(i=>i.pid===el.dataset.pid)?.name||''});bruto+=q*parseFloat(el.dataset.price)}
+  });
+  if(!items.length)return toast('Marque a quantidade de pelo menos um item','warn');
+  const total=Math.round(bruto*fator*100)/100;
+  const devCash=$('refCash').checked&&openCash();
+  s.refunds=s.refunds||[];
+  s.refunds.push({date:new Date().toISOString(),userName:session.name,items,total,cash:!!devCash});
+  items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid);if(p)p.stock+=i.qty});
+  if(devCash)openCash().movs.push({type:'devolucao',amount:total,reason:'Devolução cupom #'+String(s.num).padStart(4,'0'),at:new Date().toISOString(),userName:session.name});
+  save('sales');save('products');save('cashSessions');
+  closeModal();renderSales();updateCashPill();
+  toast('Devolução de '+fmt(total)+' registrada');
+}
+function cancelSale(id){
+  if(!can('cancel_sale'))return toast('Apenas administradores podem estornar','warn');
+  const s=S.sales.find(x=>x.id===id);if(!s||s.status!=='ok')return;
+  askConfirm('Estornar venda',`A venda <b>#${String(s.num).padStart(4,'0')}</b> (${fmt(s.total)}) será cancelada e os itens voltam ao estoque. Esta ação fica registrada.`,'Estornar venda',()=>{
+    s.status='canceled';s.canceledAt=new Date().toISOString();s.canceledBy=session.name;
+    s.items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid);if(p)p.stock+=i.qty});
+    save('sales');save('products');closeModal();renderSales();updateCashPill();
+    if(currentScreen==='caixa')renderCash();
+    toast('Venda estornada e estoque devolvido');
+  });
+}
+
+/* ============================================================
+   CONTROLE DE CAIXA
+   ============================================================ */
+function cashCalc(sess){
+  const sales=S.sales.filter(s=>s.cashId===sess.id&&s.status==='ok');
+  const byMethod={dinheiro:0,pix:0,credito:0,debito:0};
+  let totalSales=0,changeOut=0;
+  sales.forEach(s=>{totalSales+=s.total;changeOut+=s.change||0;s.payments.forEach(p=>{byMethod[p.method]=(byMethod[p.method]||0)+p.amount})});
+  const supr=sess.movs.filter(m=>m.type==='suprimento').reduce((a,m)=>a+m.amount,0);
+  const sang=sess.movs.filter(m=>m.type==='sangria').reduce((a,m)=>a+m.amount,0);
+  const devol=sess.movs.filter(m=>m.type==='devolucao').reduce((a,m)=>a+m.amount,0);
+  const cashExpected=sess.opening+(byMethod.dinheiro-changeOut)+supr-sang-devol;
+  return{sales,totalSales,byMethod,changeOut,supr,sang,devol,cashExpected,count:sales.length};
+}
+function updateCashPill(){
+  const c=openCash();
+  if(c){const k=cashCalc(c);$('cashPill').className='cash-pill open';$('cashPillTxt').textContent='Caixa aberto · '+fmt(k.cashExpected)}
+  else{$('cashPill').className='cash-pill closed';$('cashPillTxt').textContent='Caixa fechado'}
+  if($('cashBlock'))$('cashBlock').style.display=c?'none':'flex';
+}
+function renderCash(){
+  const c=openCash();
+  $('cashSub').textContent=c?'Aberto em '+dtStr(c.openedAt)+' por '+c.openedBy:'Nenhum caixa aberto no momento';
+  $('cashActions').innerHTML=c?
+    `<button class="btn btn-ghost" onclick="movModal('suprimento')">+ Suprimento</button>
+     <button class="btn btn-warm" onclick="movModal('sangria')">− Sangria</button>
+     <button class="btn btn-danger" onclick="closeCashModal()">Fechar caixa</button>`:
+    `<button class="btn btn-money" onclick="openCashModal()">Abrir caixa</button>`;
+  let html='';
+  if(c){
+    const k=cashCalc(c);
+    html+=`<div class="stat-grid">
+      <div class="stat"><div class="lb">Vendas no caixa</div><div class="vl">${k.count}</div><div class="sub">${fmt(k.totalSales)} no total</div></div>
+      <div class="stat"><div class="lb">💵 Dinheiro em gaveta</div><div class="vl pos">${fmt(k.cashExpected)}</div><div class="sub">fundo ${fmt(c.opening)} · troco dado ${fmt(k.changeOut)}</div></div>
+      <div class="stat"><div class="lb">PIX</div><div class="vl">${fmt(k.byMethod.pix)}</div></div>
+      <div class="stat"><div class="lb">Cartões</div><div class="vl">${fmt(k.byMethod.credito+k.byMethod.debito)}</div><div class="sub">crédito ${fmt(k.byMethod.credito)} · débito ${fmt(k.byMethod.debito)}</div></div>
+    </div>`;
+    html+=`<div class="card"><div class="card-pad" style="padding-bottom:8px"><h3 style="font-size:1rem">Movimentações deste caixa</h3></div><div class="tbl-wrap"><table>
+      <thead><tr><th>Hora</th><th>Tipo</th><th>Descrição</th><th class="t-r">Valor</th></tr></thead><tbody>
+      <tr><td class="money" style="font-size:.8rem">${timeStr(c.openedAt)}</td><td><span class="chip chip-ok">abertura</span></td><td>Fundo de troco · ${esc(c.openedBy)}</td><td class="t-r money">${fmt(c.opening)}</td></tr>
+      ${c.movs.map(m=>`<tr><td class="money" style="font-size:.8rem">${timeStr(m.at)}</td><td><span class="chip ${m.type==='sangria'?'chip-warn':m.type==='devolucao'?'chip-bad':'chip-ok'}">${m.type}</span></td><td>${esc(m.reason||'—')} · ${esc(m.by||m.userName||'')}</td><td class="t-r money">${m.type==='suprimento'?'+':'−'} ${fmt(m.amount)}</td></tr>`).join('')}
+      ${k.sales.slice(-30).reverse().map(s=>`<tr><td class="money" style="font-size:.8rem">${timeStr(s.date)}</td><td><span class="chip chip-gray">venda</span></td><td>Cupom #${String(s.num).padStart(4,'0')} (${s.payments.map(p=>payLabel(p.method)).join('+')})</td><td class="t-r money">+ ${fmt(s.total)}</td></tr>`).join('')}
+      </tbody></table></div></div>`;
+  }else{
+    html+=`<div class="card card-pad empty"><div class="big">🔒</div><p>O caixa está fechado. Abra um novo caixa para começar a vender.</p><button class="btn btn-money" onclick="openCashModal()">Abrir caixa</button></div>`;
+  }
+  // histórico de caixas fechados
+  const closed=[...S.cashSessions].filter(x=>x.status==='closed').sort((a,b)=>new Date(b.closedAt)-new Date(a.closedAt)).slice(0,15);
+  if(closed.length){
+    html+=`<div class="card" style="margin-top:16px"><div class="card-pad" style="padding-bottom:8px"><h3 style="font-size:1rem">Caixas anteriores</h3></div><div class="tbl-wrap"><table>
+    <thead><tr><th>Período</th><th>Operador</th><th class="t-r">Vendas</th><th class="t-r">Esperado em dinheiro</th><th class="t-r">Contado</th><th class="t-r">Diferença</th></tr></thead><tbody>
+    ${closed.map(x=>{const d=x.counted-x.expected;return `<tr><td style="font-size:.8rem">${dtStr(x.openedAt)} → ${timeStr(x.closedAt)}</td><td>${esc(x.openedBy)}</td><td class="t-r money">${fmt(x.totalSales)}</td><td class="t-r money">${fmt(x.expected)}</td><td class="t-r money">${fmt(x.counted)}</td><td class="t-r money" style="color:${Math.abs(d)<0.005?'var(--brand)':'var(--danger)'}">${d>0?'+':''}${fmt(d)}</td></tr>`}).join('')}
+    </tbody></table></div></div>`;
+  }
+  $('cashContent').innerHTML=html;
+}
+function openCashModal(){
+  if(openCash())return;
+  openModal('Abrir caixa',`
+    <p style="font-size:.88rem;color:var(--txt-soft);margin-bottom:14px">Informe o valor em dinheiro que está na gaveta para troco (fundo de caixa).</p>
+    <div class="field"><label>Fundo de troco (R$)</label><input class="inp money" id="openVal" inputmode="decimal" placeholder="0,00" style="font-size:1.2rem" onkeydown="if(event.key==='Enter')doOpenCash()"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-money" onclick="doOpenCash()">Abrir caixa</button>`);
+  setTimeout(()=>$('openVal').focus(),60);
+}
+function doOpenCash(){
+  const v=parseMoney($('openVal').value);
+  S.cashSessions.push({id:uid(),openedAt:new Date().toISOString(),openedBy:session.name,opening:v,movs:[],status:'open'});
+  save('cashSessions');closeModal();updateCashPill();
+  if(currentScreen==='caixa')renderCash();if(currentScreen==='pdv')renderPDV();
+  toast('Caixa aberto com fundo de '+fmt(v));
+}
+function movModal(type){
+  const isS=type==='sangria';
+  openModal(isS?'Sangria (retirada)':'Suprimento (entrada)',`
+    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:14px">${isS?'Retirada de dinheiro da gaveta (ex.: depósito, pagamento de fornecedor).':'Entrada de dinheiro na gaveta fora de vendas (ex.: reforço de troco).'}</p>
+    <div class="field"><label>Valor (R$)</label><input class="inp money" id="movVal" inputmode="decimal" placeholder="0,00"></div>
+    <div class="field"><label>Motivo</label><input class="inp" id="movReason" placeholder="${isS?'Ex.: depósito bancário':'Ex.: reforço de troco'}" onkeydown="if(event.key==='Enter')doMov('${type}')"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn ${isS?'btn-warm':'btn-money'}" onclick="doMov('${type}')">Registrar ${type}</button>`);
+  setTimeout(()=>$('movVal').focus(),60);
+}
+function doMov(type){
+  const c=openCash();if(!c)return;
+  const v=parseMoney($('movVal').value);
+  if(v<=0)return toast('Informe um valor válido','warn');
+  if(type==='sangria'&&v>cashCalc(c).cashExpected)return toast('Valor maior que o dinheiro em gaveta','err');
+  c.movs.push({type,amount:v,reason:$('movReason').value.trim(),at:new Date().toISOString(),by:session.name});
+  save('cashSessions');closeModal();renderCash();updateCashPill();toast(type==='sangria'?'Sangria registrada':'Suprimento registrado');
+}
+function closeCashModal(){
+  const c=openCash();if(!c)return;
+  const k=cashCalc(c);
+  openModal('Fechar caixa',`
+    <div class="pay-total-strip"><span class="lb">Esperado em dinheiro</span><span class="money">${fmt(k.cashExpected)}</span></div>
+    <div class="field"><label>Dinheiro contado na gaveta (R$)</label><input class="inp money" id="closeVal" inputmode="decimal" placeholder="0,00" style="font-size:1.15rem" oninput="closeDiff(${k.cashExpected})" onkeydown="if(event.key==='Enter')doCloseCash()"></div>
+    <div id="closeDiffBox" style="font-size:.88rem;padding:4px 2px"></div>
+    <p style="font-size:.78rem;color:var(--txt-soft);margin-top:10px">Resumo: ${k.count} vendas · total ${fmt(k.totalSales)} · PIX ${fmt(k.byMethod.pix)} · cartões ${fmt(k.byMethod.credito+k.byMethod.debito)}</p>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-danger" onclick="doCloseCash()">Confirmar fechamento</button>`);
+  setTimeout(()=>$('closeVal').focus(),60);
+}
+function closeDiff(exp){
+  const d=parseMoney($('closeVal').value)-exp;
+  $('closeDiffBox').innerHTML=Math.abs(d)<0.005?'<span style="color:var(--brand)">✓ Caixa confere</span>':
+    `<span style="color:var(--danger)">Diferença de <b class="money">${d>0?'+':''}${fmt(d)}</b> (${d>0?'sobra':'falta'})</span>`;
+}
+function doCloseCash(){
+  const c=openCash();if(!c)return;
+  const k=cashCalc(c);
+  const counted=parseMoney($('closeVal').value);
+  Object.assign(c,{status:'closed',closedAt:new Date().toISOString(),closedBy:session.name,expected:k.cashExpected,counted,totalSales:k.totalSales});
+  save('cashSessions');closeModal();renderCash();updateCashPill();if(currentScreen==='pdv')renderPDV();
+  toast('Caixa fechado. Diferença: '+fmt(counted-k.cashExpected));
+}
+
+/* ============================================================
+   RELATÓRIOS
+   ============================================================ */
+function renderReports(){
+  const ok=S.sales.filter(s=>s.status==='ok');
+  const now=new Date();
+  const today=ok.filter(s=>sameDay(s.date,now));
+  const tTotal=today.reduce((a,s)=>a+netTotal(s),0);
+  const tTicket=today.length?tTotal/today.length:0;
+  // lucro estimado de hoje (preço - custo cadastrado)
+  let tProfit=0;
+  today.forEach(s=>{
+    const ratio=s.subtotal>0?s.total/s.subtotal:1; // distribui desconto
+    s.items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid),q=i.qty-refundedQty(s,i.pid);tProfit+=(i.price*ratio-(p?.cost||0))*q});
+  });
+  const lowStock=S.products.filter(p=>p.active!==false&&p.stock<=(p.minStock||0));
+  // últimos 7 dias
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(now);d.setDate(d.getDate()-i);
+    const v=ok.filter(s=>sameDay(s.date,d)).reduce((a,s)=>a+netTotal(s),0);
+    days.push({lb:d.toLocaleDateString('pt-BR',{weekday:'short'}).replace('.',''),full:todayStr(d),v});
+  }
+  const maxD=Math.max(...days.map(d=>d.v),1);
+  // formas de pagamento (30 dias)
+  const last30=ok.filter(s=>(now-new Date(s.date))/864e5<=30);
+  const pm={};last30.forEach(s=>s.payments.forEach(p=>{pm[p.method]=(pm[p.method]||0)+p.amount}));
+  const pmTotal=Object.values(pm).reduce((a,b)=>a+b,0)||1;
+  // top produtos (30 dias)
+  const top={};last30.forEach(s=>s.items.forEach(i=>{const q=i.qty-refundedQty(s,i.pid);if(q>0){top[i.name]=top[i.name]||{q:0,v:0};top[i.name].q+=q;top[i.name].v+=i.price*q}}));
+  const topList=Object.entries(top).sort((a,b)=>b[1].v-a[1].v).slice(0,7);
+  const maxT=Math.max(...topList.map(t=>t[1].v),1);
+
+  // desempenho por vendedor (30 dias, líquido de devoluções)
+  const sellers={};
+  last30.forEach(s=>{const k=s.userName||'—';sellers[k]=sellers[k]||{v:0,n:0};sellers[k].v+=netTotal(s);sellers[k].n++});
+  const sellerList=Object.entries(sellers).sort((a,b)=>b[1].v-a[1].v);
+  const comm=S.settings.commission||0;
+  $('repContent').innerHTML=`
+  <div class="stat-grid">
+    <div class="stat"><div class="lb">Vendas de hoje</div><div class="vl pos">${fmt(tTotal)}</div><div class="sub">${today.length} cupons</div></div>
+    <div class="stat"><div class="lb">Ticket médio hoje</div><div class="vl">${fmt(tTicket)}</div></div>
+    <div class="stat"><div class="lb">Lucro estimado hoje</div><div class="vl ${tProfit>=0?'pos':'neg'}">${fmt(tProfit)}</div><div class="sub">baseado no custo cadastrado</div></div>
+    <div class="stat"><div class="lb">Estoque baixo</div><div class="vl ${lowStock.length?'warn':''}">${lowStock.length}</div><div class="sub">${lowStock.length?'produtos para repor':'tudo em dia ✓'}</div></div>
+  </div>
+  <div class="rep-grid">
+    <div class="card card-pad">
+      <h3 style="font-size:1rem;margin-bottom:4px">Vendas — últimos 7 dias</h3>
+      <p style="font-size:.78rem;color:var(--txt-soft)">Total: <b class="money">${fmt(days.reduce((a,d)=>a+d.v,0))}</b></p>
+      <div class="bar-chart">${days.map(d=>`<div class="bar-col" title="${d.full}: ${fmt(d.v)}"><span class="bv">${d.v?fmt(d.v).replace(/,\d+$/,''):''}</span><div class="bar" style="height:${Math.max(2,d.v/maxD*100)}%"></div><span class="bl">${d.lb}</span></div>`).join('')}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card card-pad">
+        <h3 style="font-size:1rem;margin-bottom:14px">Formas de pagamento <span style="font-size:.7rem;color:var(--txt-soft);font-weight:400">(30 dias)</span></h3>
+        ${Object.keys(pm).length?PAY_METHODS.filter(m=>pm[m.id]).map(m=>`<div class="hbar-row"><div class="hbar-top"><span>${m.label}</span><span class="money">${fmt(pm[m.id])} · ${Math.round(pm[m.id]/pmTotal*100)}%</span></div><div class="hbar"><i style="width:${pm[m.id]/pmTotal*100}%"></i></div></div>`).join(''):'<p style="color:var(--txt-soft);font-size:.85rem">Sem vendas no período.</p>'}
+      </div>
+      <div class="card card-pad">
+        <h3 style="font-size:1rem;margin-bottom:14px">Produtos mais vendidos <span style="font-size:.7rem;color:var(--txt-soft);font-weight:400">(30 dias)</span></h3>
+        ${topList.length?topList.map(([n,d])=>`<div class="hbar-row"><div class="hbar-top"><span>${esc(n)} <span style="color:var(--txt-soft)">· ${d.q} un</span></span><span class="money">${fmt(d.v)}</span></div><div class="hbar warm"><i style="width:${d.v/maxT*100}%"></i></div></div>`).join(''):'<p style="color:var(--txt-soft);font-size:.85rem">Sem vendas no período.</p>'}
+      </div>
+    </div>
+  </div>
+  ${sellerList.length?`<div class="card" style="margin-top:16px"><div class="card-pad" style="padding-bottom:8px;display:flex;justify-content:space-between;align-items:center"><h3 style="font-size:1rem">👤 Desempenho por vendedor <span style="font-weight:400;color:var(--txt-soft);font-size:.82rem">(30 dias)</span></h3><button class="btn btn-ghost btn-sm" onclick="setCommission()">Comissão: ${comm}%</button></div><div class="tbl-wrap"><table><thead><tr><th>Vendedor</th><th class="t-c">Vendas</th><th class="t-r">Total</th>${comm>0?'<th class="t-r">Comissão</th>':''}</tr></thead><tbody>${sellerList.map(([nm,d])=>`<tr><td><b>${esc(nm)}</b></td><td class="t-c">${d.n}</td><td class="t-r money">${fmt(d.v)}</td>${comm>0?`<td class="t-r money" style="color:var(--brand)">${fmt(d.v*comm/100)}</td>`:''}</tr>`).join('')}</tbody></table></div></div>`:''}
+  ${lowStock.length?`<div class="card" style="margin-top:16px"><div class="card-pad" style="padding-bottom:8px"><h3 style="font-size:1rem">⚠ Produtos com estoque baixo</h3></div><div class="tbl-wrap"><table><thead><tr><th>Produto</th><th class="t-c">Estoque</th><th class="t-c">Mínimo</th><th class="t-r">Preço</th></tr></thead><tbody>${lowStock.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="t-c"><span class="chip ${p.stock<=0?'chip-bad':'chip-warn'}">${p.stock}</span></td><td class="t-c money">${p.minStock||0}</td><td class="t-r money">${fmt(p.price)}</td></tr>`).join('')}</tbody></table></div></div>`:''}`;
+}
+
+/* ============================================================
+   CONFIGURAÇÕES
+   ============================================================ */
+function renderConfig(){
+  const st=S.settings;
+  $('cfgContent').innerHTML=`
+  <div class="rep-grid">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card card-pad">
+        <h3 style="font-size:1rem;margin-bottom:14px">Dados da loja (saem no cupom)</h3>
+        <div class="form-grid">
+          <div class="field full"><label>Nome da loja</label><input class="inp" id="stNome" value="${esc(st.storeName)}"></div>
+          <div class="field"><label>CNPJ / CPF</label><input class="inp money" id="stDoc" value="${esc(st.doc)}"></div>
+          <div class="field full"><label>Chave PIX (para QR Code na cobrança)</label><input class="inp" id="stPixKey" value="${esc(st.pixKey||'')}" placeholder="e-mail, telefone, CPF/CNPJ ou chave aleatória"></div>
+          <div class="field"><label>Cidade da conta PIX</label><input class="inp" id="stPixCity" value="${esc(st.pixCity||'')}" placeholder="Ex.: Fortaleza"></div>
+          <div class="field"><label>Telefone</label><input class="inp" id="stFone" value="${esc(st.phone)}"></div>
+          <div class="field full"><label>Endereço</label><input class="inp" id="stEnd" value="${esc(st.address)}"></div>
+          <div class="field full"><label>Mensagem no rodapé do cupom</label><input class="inp" id="stFoot" value="${esc(st.footer)}"></div>
+          <div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="stNoStock" ${st.allowNoStock?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Permitir venda com estoque zerado (apenas avisa)</label></div>
+          <div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="stAutoPrint" ${st.autoPrint?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Imprimir cupom automaticamente ao finalizar a venda</label></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">Salvar dados da loja</button>
+      </div>
+      <div class="card card-pad">
+        <h3 style="font-size:1rem;margin-bottom:6px">Cor do sistema</h3>
+        <p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:14px">Escolha a cor da interface. Vale para este dispositivo e aparece já na tela de login — operadores também podem trocar pelo botão de paleta no menu.</p>
+        ${themePickerHTML()}
+      </div>
+      <div class="card card-pad">
+        <h3 style="font-size:1rem;margin-bottom:6px">Backup dos dados</h3>
+        <p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:14px">Os dados ficam salvos <b>neste navegador/dispositivo</b>. Exporte um backup com frequência — é o seu seguro contra perda de dados, troca de aparelho ou limpeza do navegador.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-money" onclick="exportBackup()">⬇ Exportar backup (.json)</button>
+          <button class="btn btn-ghost" onclick="$('importFile').click()">⬆ Importar backup</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importBackup(this)">
+        </div>
+        <hr style="border:none;border-top:1px dashed var(--line);margin:18px 0">
+        <button class="btn btn-danger btn-sm" onclick="resetAll()">Apagar todos os dados</button>
+      </div>
+    </div>
+    <div class="card card-pad">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="font-size:1rem">Usuários do sistema</h3><button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Novo</button></div>
+      <div id="usersList">${S.users.map(u=>`
+        <div class="pay-line"><span><b>${esc(u.name)}</b><br><span style="font-size:.74rem;color:var(--txt-soft)">@${esc(u.user)} · ${u.role==='admin'?'Administrador':'Operador'}</span></span>
+        <span style="display:flex;gap:4px">
+          <button class="icon-btn" title="Editar / trocar senha" onclick="openUserModal('${u.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3l4 4L8 20l-5 1 1-5z"/></svg></button>
+          ${u.id!==session.id?`<button class="icon-btn del" title="Excluir" onclick="delUser('${u.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13h10l1-13"/></svg></button>`:''}
+        </span></div>`).join('')}</div>
+      <p style="font-size:.76rem;color:var(--txt-soft);margin-top:10px;line-height:1.5"><b>Administrador:</b> acesso total.<br><b>Operador:</b> vende, consulta produtos/clientes e movimenta o caixa — sem acesso a relatórios, configurações e estornos.</p>
+    </div>
+  </div>`;
+}
+function saveSettings(){
+  Object.assign(S.settings,{storeName:$('stNome').value.trim()||'PinhoPDV',doc:$('stDoc').value.trim(),phone:$('stFone').value.trim(),address:$('stEnd').value.trim(),footer:$('stFoot').value.trim(),allowNoStock:$('stNoStock').checked,autoPrint:$('stAutoPrint').checked,pixKey:$('stPixKey').value.trim(),pixCity:$('stPixCity').value.trim()});
+  save('settings');applyStoreName();toast('Dados da loja salvos');
+}
+function openUserModal(id){
+  const u=id?S.users.find(x=>x.id===id):null;
+  openModal(u?'Editar usuário':'Novo usuário',`
+    <div class="form-grid">
+      <div class="field full"><label>Nome</label><input class="inp" id="uNome" value="${esc(u?.name||'')}" placeholder="João Pereira"></div>
+      <div class="field"><label>Usuário (login)</label><input class="inp" id="uUser" value="${esc(u?.user||'')}" placeholder="joao" autocapitalize="none"></div>
+      <div class="field"><label>Perfil</label><select class="inp" id="uRole"><option value="operador" ${u?.role==='operador'?'selected':''}>Operador de caixa</option><option value="admin" ${u?.role==='admin'?'selected':''}>Administrador</option></select></div>
+      <div class="field full"><label>${u?'Nova senha (deixe vazio para manter)':'Senha *'}</label><input class="inp" id="uPass" type="password" placeholder="mínimo 6 caracteres" autocomplete="new-password"></div>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="saveUser('${id||''}')">${u?'Salvar':'Criar usuário'}</button>`);
+}
+async function saveUser(id){
+  const name=$('uNome').value.trim(),user=$('uUser').value.trim().toLowerCase(),pass=$('uPass').value,role=$('uRole').value;
+  if(!name||!user)return toast('Preencha nome e usuário','warn');
+  if(S.users.some(x=>x.user===user&&x.id!==id))return toast('Este usuário já existe','err');
+  if(!id&&pass.length<6)return toast('A senha precisa ter ao menos 6 caracteres','warn');
+  if(id&&pass&&pass.length<6)return toast('A nova senha precisa ter ao menos 6 caracteres','warn');
+  if(id){
+    const u=S.users.find(x=>x.id===id);
+    if(u.role==='admin'&&role!=='admin'&&S.users.filter(x=>x.role==='admin').length===1)return toast('Mantenha ao menos um administrador','err');
+    u.name=name;u.user=user;u.role=role;
+    if(pass){u.hash=await sha256(pass);u.mustChange=false}
+    if(u.id===session.id){session.name=name;DB.set('session',session);$('userName').textContent=name}
+    toast('Usuário atualizado');
+  }else{
+    S.users.push({id:uid(),name,user,hash:await sha256(pass),role});toast('Usuário criado');
+  }
+  save('users');closeModal();renderConfig();
+}
+function delUser(id){
+  const u=S.users.find(x=>x.id===id);
+  if(u.role==='admin'&&S.users.filter(x=>x.role==='admin').length===1)return toast('Mantenha ao menos um administrador','err');
+  askConfirm('Excluir usuário',`<b>${esc(u.name)}</b> perderá o acesso ao sistema.`,'Excluir',()=>{
+    S.users=S.users.filter(x=>x.id!==id);save('users');renderConfig();toast('Usuário excluído');
+  });
+}
+function exportBackup(){
+  const data={app:'pinhopdv',version:1,exportedAt:new Date().toISOString(),
+    users:S.users,products:S.products,customers:S.customers,sales:S.sales,cashSessions:S.cashSessions,settings:S.settings,seq:S.seq};
+  const blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='backup-pdv-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  URL.revokeObjectURL(a.href);toast('Backup exportado');
+}
+function importBackup(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ 
+    try{
+      const d=JSON.parse(r.result);
+      if(!['pinhopdv','caixa-verde'].includes(d.app)||!Array.isArray(d.products))throw 0;
+      askConfirm('Importar backup','Os dados atuais serão <b>substituídos</b> pelos do arquivo. Deseja continuar?','Importar e substituir',()=>{
+        ['users','products','customers','sales','cashSessions','settings','seq'].forEach(k=>{S[k]=d[k]??S[k];save(k)});
+        applyTheme(S.settings.theme||'verde');applyStoreName();updateCashPill();go(currentScreen);toast('Backup importado com sucesso');
+      });
+    }catch(e){toast('Arquivo de backup inválido','err')}
+    input.value='';
+  };
+  r.readAsText(f);
+}
+function resetAll(){
+  askConfirm('Apagar todos os dados','TUDO será apagado: produtos, vendas, clientes, caixas e usuários. <b>Esta ação não tem volta.</b> Exporte um backup antes.','Apagar tudo',()=>{
+    ['users','products','customers','sales','cashSessions','settings','seq','session'].forEach(k=>DB.del(k));
+    location.reload();
+  });
+}
+
+/* ============================================================
+   ATALHOS DE TECLADO + INICIALIZAÇÃO
+   ============================================================ */
+document.addEventListener('keydown',e=>{
+  if(!session)return;
+  if(e.key==='Escape'){closeModal();return}
+  if(['F1','F2','F4','F5','F6','F8'].includes(e.key))e.preventDefault();
+  if(e.key==='F1'){go('pdv');$('pdvSearch').focus()}
+  if(e.key==='F2')go('pdv');
+  if(e.key==='F4'&&currentScreen==='pdv')openDiscountModal();
+  if(e.key==='F5'&&currentScreen==='pdv'){if(payState){finishSaleIfReady()}else openPayModal()}
+  if(e.key==='F6'&&currentScreen==='pdv'&&!payState)holdTicket();
+  if(e.key==='F8'&&currentScreen==='pdv')cancelTicket();
+});
+function finishSaleIfReady(){if($('payFinish')&&!$('payFinish').disabled)finishSale()}
+window.addEventListener('beforeunload',e=>{if(ticket.items.length){e.preventDefault();e.returnValue=''}});
+
+/* ---------- PWA: instalar como app ---------- */
+(function setupPWA(){
+  try{
+    const icon=c=>"data:image/svg+xml,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='${c}'/><text x='256' y='340' font-size='260' text-anchor='middle' fill='white' font-family='monospace'>R$</text></svg>`);
+    const man={name:'PinhoPDV — Ponto de venda',short_name:'PinhoPDV',start_url:'.',scope:'.',display:'standalone',orientation:'any',background_color:'#14201B',theme_color:'#0E5E45',
+      icons:[{src:icon('#0E5E45'),sizes:'512x512',type:'image/svg+xml',purpose:'any maskable'}]};
+    const blob=new Blob([JSON.stringify(man)],{type:'application/manifest+json'});
+    const l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(blob);document.head.appendChild(l);
+    // service worker mínimo (cache-first do próprio app) — habilita o "instalar"
+    if('serviceWorker'in navigator&&location.protocol==='https:'){
+      const sw=`self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>{e.respondWith(caches.open('pinhopdv-v1').then(async c=>{const h=await c.match(e.request);if(h)return h;try{const r=await fetch(e.request);if(e.request.method==='GET'&&r.ok&&e.request.url.startsWith(self.location.origin))c.put(e.request,r.clone());return r}catch(err){const f=await c.match('./');return f||Response.error()}}))});`;
+      navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});
+    }
+  }catch(e){}
+})();
+let _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredPrompt=e;const b=$('installBtn');if(b)b.style.display='flex'});
+window.addEventListener('appinstalled',()=>{const b=$('installBtn');if(b)b.style.display='none';toast('App instalado! 📲')});
+function installApp(){
+  if(!_deferredPrompt)return toast('No celular: use o menu do navegador → “Adicionar à tela inicial”','warn');
+  _deferredPrompt.prompt();_deferredPrompt.userChoice.finally(()=>{_deferredPrompt=null;const b=$('installBtn');if(b)b.style.display='none'});
+}
+(async function init(){
+  if(S.settings.storeName==='Caixa Verde'){S.settings.storeName='PinhoPDV';save('settings')} // migração do nome padrão antigo
+  applyTheme(S.settings.theme||'verde');
+  await ensureAdmin();
+  if(!DB.ok)toast('Aviso: armazenamento do navegador indisponível — os dados não serão salvos ao fechar. Hospede o arquivo (https) para persistência.','warn');
+  if(session&&S.users.some(u=>u.id===session.id))enterApp();
+  else{session=null;$('loginScreen').style.display='flex'}
+})();
+</script>
+</body>
+</html>

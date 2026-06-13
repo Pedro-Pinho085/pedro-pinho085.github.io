@@ -1,0 +1,13 @@
+{
+ "app": "pinhopdv-gerador",
+ "exportadoEm": "2026-06-12T20:03:36.134Z",
+ "chaves": [
+  {
+   "n": "Freitas Mercadinho",
+   "exp": 2097500355799,
+   "iat": 1781276355799,
+   "dias": 3660,
+   "key": "PINHO1.eyJ2IjoxLCJuIjoiRnJlaXRhcyBNZXJjYWRpbmhvIiwiYyI6Ijg1OTkyMTI1ODc4IiwiaWF0IjoxNzgxMjc2MzU1Nzk5LCJleHAiOjIwOTc1MDAzNTU3OTksImlkIjoiNmJqOGFiIn0.-uOa2NvcWrUilscVinfh9DhZCDITjR5u6hfrDNmQVahBAPc3IPLTRyQS7vBBynRNw0CmTpX3JtCGHIEuLpJ9ow"
+  }
+ ]
+}
