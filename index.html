@@ -562,6 +562,7 @@ tbody tr:hover{background:#FAFAF4}
 <section class="screen" id="screen-relatorios">
   <div class="screen-head">
     <div style="display:flex;gap:12px;align-items:center"><button class="menu-btn" onclick="toggleSidebar(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><h2>Relatórios</h2><p>Visão geral do desempenho da loja</p></div></div>
+    <button class="btn btn-primary" onclick="openReportExport()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;margin-right:5px;vertical-align:-3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Baixar relatório</button>
   </div>
   <div id="repContent"></div>
 </section>
@@ -2094,6 +2095,8 @@ async function doLogin(){
   const u=$('loginUser').value.trim().toLowerCase(),p=$('loginPass').value;
   if(!u||!p)return toast('Informe usuário e senha','warn');
   const h=await sha256(p);
+  const semSenha=S.users.find(x=>x.user===u&&(x.needPass||!x.hash));
+  if(semSenha)return toast('Este usuário foi importado e ainda não tem senha. Um administrador precisa defini-la em Configurações → Usuários.','warn');
   const found=S.users.find(x=>x.user===u&&x.hash===h);
   if(!found)return toast('Usuário ou senha incorretos','err');
   session={id:found.id,name:found.name,user:found.user,role:found.role};
@@ -3118,14 +3121,35 @@ function renderConfig(){
           <button class="btn btn-ghost" onclick="$('importFile').click()">⬆ Importar backup</button>
           <input type="file" id="importFile" accept=".json" style="display:none" onchange="importBackup(this)">
         </div>
+        <p style="font-size:.76rem;color:var(--txt-soft);margin-top:10px">O backup .json salva e restaura <b>tudo de uma vez</b> (ideal pra trocar de aparelho).</p>
+        <hr style="border:none;border-top:1px dashed var(--line);margin:18px 0">
+        <h3 style="font-size:1rem;margin-bottom:6px">Importar / Exportar planilhas</h3>
+        <p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:14px">Migre produtos, clientes e usuários de outro sistema, ou baixe suas tabelas em CSV (Excel). Na importação você relaciona as colunas do arquivo.</p>
+        <button class="btn btn-primary" onclick="openDataCenter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;margin-right:6px;vertical-align:-3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Abrir central de dados</button>
         <hr style="border:none;border-top:1px dashed var(--line);margin:18px 0">
         <button class="btn btn-danger btn-sm" onclick="resetAll()">Apagar todos os dados</button>
+      </div>
+      <div class="card card-pad">
+        <h3 style="font-size:1rem;margin-bottom:6px">Importar e exportar tabelas (CSV)</h3>
+        <p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:14px">Traga dados de outro sistema ou planilha, ou leve os seus para o Excel. A importação reconhece as colunas de qualquer arquivo CSV — você confirma o que é cada uma.</p>
+        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt-soft);margin-bottom:8px">Importar de um CSV</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+          <button class="btn btn-money" onclick="openImportModal('products')">⬆ Importar produtos</button>
+          <button class="btn btn-money" onclick="openImportModal('customers')">⬆ Importar clientes</button>
+        </div>
+        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt-soft);margin-bottom:8px">Exportar para CSV (abre no Excel)</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="exportTable('products')">⬇ Produtos</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportTable('sales')">⬇ Vendas</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportTable('customers')">⬇ Clientes</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportTable('users')">⬇ Usuários</button>
+        </div>
       </div>
     </div>
     <div class="card card-pad">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="font-size:1rem">Usuários do sistema</h3><button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Novo</button></div>
       <div id="usersList">${S.users.map(u=>`
-        <div class="pay-line"><span><b>${esc(u.name)}</b><br><span style="font-size:.74rem;color:var(--txt-soft)">@${esc(u.user)} · ${u.role==='admin'?'Administrador':'Operador'}</span></span>
+        <div class="pay-line"><span><b>${esc(u.name)}</b>${(u.needPass||!u.hash)?' <span class="chip chip-bad" style="font-size:.6rem">sem senha</span>':''}<br><span style="font-size:.74rem;color:var(--txt-soft)">@${esc(u.user)} · ${u.role==='admin'?'Administrador':'Operador'}</span></span>
         <span style="display:flex;gap:4px">
           <button class="icon-btn" title="Editar / trocar senha" onclick="openUserModal('${u.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3l4 4L8 20l-5 1 1-5z"/></svg></button>
           ${u.id!==session.id?`<button class="icon-btn del" title="Excluir" onclick="delUser('${u.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6 7l1 13h10l1-13"/></svg></button>`:''}
@@ -3179,8 +3203,9 @@ async function saveUser(id){
   if(id){
     const u=S.users.find(x=>x.id===id);
     if(u.role==='admin'&&role!=='admin'&&S.users.filter(x=>x.role==='admin').length===1)return toast('Mantenha ao menos um administrador','err');
+    if((u.needPass||!u.hash)&&!pass)return toast('Defina uma senha para este usuário importado','warn');
     u.name=name;u.user=user;u.role=role;
-    if(pass){u.hash=await sha256(pass);u.mustChange=false}
+    if(pass){u.hash=await sha256(pass);u.mustChange=false;u.needPass=false}
     if(u.id===session.id){session.name=name;DB.set('session',session);$('userName').textContent=name}
     toast('Usuário atualizado');
   }else{
@@ -3194,6 +3219,712 @@ function delUser(id){
   askConfirm('Excluir usuário',`<b>${esc(u.name)}</b> perderá o acesso ao sistema.`,'Excluir',()=>{
     S.users=S.users.filter(x=>x.id!==id);save('users');renderConfig();toast('Usuário excluído');
   });
+}
+/* ========================= IMPORTAR / EXPORTAR POR TABELA ========================= */
+// parser CSV robusto (aspas, ; ou , como separador, vírgula dentro de campo)
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,''); // remove BOM
+  const fl=text.slice(0,(text.indexOf('\n')+1||text.length));
+  const sep=(fl.split(';').length>fl.split(',').length)?';':',';
+  const rows=[];let row=[],field='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],nx=text[i+1];
+    if(inQ){
+      if(c==='"'&&nx==='"'){field+='"';i++}
+      else if(c==='"')inQ=false;
+      else field+=c;
+    }else{
+      if(c==='"')inQ=true;
+      else if(c===sep){row.push(field);field=''}
+      else if(c==='\r'){}
+      else if(c==='\n'){row.push(field);rows.push(row);row=[];field=''}
+      else field+=c;
+    }
+  }
+  if(field!==''||row.length){row.push(field);rows.push(row)}
+  return rows.filter(r=>r.some(c=>String(c).trim()!==''));
+}
+function _normH(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[_\-\s]/g,'')}
+function guessField(header,targetFields){
+  const h=_normH(header);
+  const syn={
+    minStock:['estoqueminimo','estoquemin','minimo','minstock','minimum','qtdminima','estminimo'],
+    cost:['custo','cost','precocusto','custounitario','valorcusto','precodecusto'],
+    code:['codigo','code','sku','barcode','codbarras','codigodebarras','ean','referencia','ref','cod'],
+    price:['preco','price','valor','valorunitario','precovenda','unitprice','precounitario','precodevenda'],
+    stock:['estoque','stock','quantidade','qtd','qty','saldo','quant','inventory'],
+    name:['nome','name','produto','descricao','description','item','title','titulo','razaosocial','cliente','nomedoproduto'],
+    cat:['categoria','category','cat','grupo','tipo','departamento','secao'],
+    phone:['telefone','phone','celular','fone','tel','whatsapp','contato','mobile'],
+    email:['email','mail','correio'],
+    doc:['cpf','cnpj','documento','doc','cpfcnpj','rg'],
+    obs:['observacao','obs','nota','notas','comentario','comment','notes'],
+  };
+  const pri=['minStock','cost','code','price','stock','name','cat','phone','email','doc','obs'];
+  const order=pri.filter(f=>targetFields.includes(f));
+  for(const f of order){if((syn[f]||[f]).some(s=>_normH(s)===h))return f}
+  for(const f of order){if((syn[f]||[f]).some(s=>{const n=_normH(s);return n.length>3&&(h.includes(n)||n.includes(h))}))return f}
+  return null;
+}
+// rótulos amigáveis de cada campo destino
+const FIELD_LABELS={name:'Nome',code:'Código',price:'Preço (venda)',cost:'Custo',stock:'Estoque',minStock:'Estoque mínimo',cat:'Categoria',phone:'Telefone',email:'E-mail',doc:'CPF/CNPJ',obs:'Observação'};
+const IMPORT_TARGETS={
+  products:{label:'Produtos',fields:['name','code','price','cost','stock','minStock','cat'],required:['name'],dedup:'code'},
+  customers:{label:'Clientes',fields:['name','phone','email','doc','obs'],required:['name'],dedup:'phone'},
+};
+let _importState=null;
+function openImportModal(target){
+  const cfg=IMPORT_TARGETS[target];
+  openModal('Importar '+cfg.label,`
+    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:14px">Selecione um arquivo <b>CSV</b> exportado de qualquer sistema ou planilha (Excel, Google Sheets, outro PDV). Na próxima etapa você confirma qual coluna é o quê.</p>
+    <div style="border:2px dashed var(--line);border-radius:12px;padding:26px;text-align:center;cursor:pointer" onclick="$('importCsvFile').click()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:38px;height:38px;margin-bottom:8px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      <div style="font-weight:600">Toque para escolher o arquivo CSV</div>
+      <div style="font-size:.76rem;color:var(--txt-soft);margin-top:4px">aceita separador vírgula ou ponto-e-vírgula</div>
+    </div>
+    <input type="file" id="importCsvFile" accept=".csv,text/csv" style="display:none" onchange="onImportFile(this,'${target}')">
+    <p style="font-size:.76rem;color:var(--txt-soft);margin-top:12px">Dica: no Excel/Google Sheets use <b>Arquivo → Baixar → CSV</b>.</p>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>`,true);
+}
+function onImportFile(input,target){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const rows=parseCSV(e.target.result);
+      if(rows.length<2){toast('O arquivo precisa ter cabeçalho e ao menos uma linha','warn');return}
+      const headers=rows[0], body=rows.slice(1);
+      const cfg=IMPORT_TARGETS[target];
+      // auto-mapeia
+      const mapping=headers.map(h=>guessField(h,cfg.fields));
+      _importState={target,headers,body,mapping};
+      renderMappingStep();
+    }catch(err){toast('Não foi possível ler o arquivo','err')}
+  };
+  reader.onerror=()=>toast('Erro ao ler o arquivo','err');
+  reader.readAsText(file,'UTF-8');
+}
+function renderMappingStep(){
+  const {target,headers,body,mapping}=_importState;
+  const cfg=IMPORT_TARGETS[target];
+  const opts=field=>`<option value="">— ignorar —</option>`+cfg.fields.map(f=>`<option value="${f}" ${field===f?'selected':''}>${FIELD_LABELS[f]}${cfg.required.includes(f)?' *':''}</option>`).join('');
+  const preview=body.slice(0,3);
+  openModal('Confirmar colunas — '+cfg.label,`
+    <p style="font-size:.85rem;color:var(--txt-soft);margin-bottom:6px">Encontramos <b>${body.length}</b> linha(s). Confirme para qual campo vai cada coluna. Já tentamos adivinhar.</p>
+    <div style="max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:10px">
+    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead><tr style="position:sticky;top:0;background:var(--bg)"><th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Coluna do arquivo</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Vai para o campo</th></tr></thead>
+      <tbody>
+      ${headers.map((h,i)=>`<tr>
+        <td style="padding:8px;border-bottom:1px solid var(--line)"><b>${esc(h||'(sem nome)')}</b><br><span style="color:var(--txt-soft);font-size:.72rem">ex.: ${esc((preview.map(r=>r[i]).find(v=>v&&v.trim())||'—').slice(0,22))}</span></td>
+        <td style="padding:8px;border-bottom:1px solid var(--line)"><select class="inp" id="map_${i}" style="padding:7px;font-size:.82rem">${opts(mapping[i])}</select></td>
+      </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.84rem"><input type="checkbox" id="impUpdate" checked style="width:16px;height:16px;accent-color:var(--brand)"> Atualizar itens já existentes (pelo ${cfg.dedup==='code'?'código':'telefone'}) em vez de duplicar</label>
+    <p style="font-size:.74rem;color:var(--txt-soft);margin-top:8px">Campos com * são obrigatórios. Linhas sem esses campos serão ignoradas.</p>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="runImport()">Importar ${body.length} linha(s)</button>`,true);
+}
+function runImport(){
+  const {target,headers,body}=_importState;
+  const cfg=IMPORT_TARGETS[target];
+  // lê o mapeamento escolhido
+  const mapping=headers.map((h,i)=>$('map_'+i).value||null);
+  if(!cfg.required.every(r=>mapping.includes(r))){
+    toast('Defina a coluna obrigatória: '+cfg.required.map(r=>FIELD_LABELS[r]).join(', '),'warn');return;
+  }
+  const update=$('impUpdate').checked;
+  let criados=0,atualizados=0,ignorados=0;
+  body.forEach(row=>{
+    const obj={};
+    mapping.forEach((field,i)=>{if(field)obj[field]=(row[i]||'').trim()});
+    if(!cfg.required.every(r=>obj[r])){ignorados++;return}
+    if(target==='products'){
+      const rec={
+        name:obj.name,
+        code:obj.code||'',
+        price:_parseNum(obj.price),
+        cost:_parseNum(obj.cost),
+        stock:parseInt(_parseNum(obj.stock))||0,
+        minStock:parseInt(_parseNum(obj.minStock))||0,
+        cat:obj.cat||'Geral',
+      };
+      let exist=update&&rec.code?S.products.find(p=>String(p.code)===String(rec.code)&&rec.code):null;
+      if(exist){Object.assign(exist,rec);atualizados++}
+      else{S.products.push({id:uid(),...rec,promo:0,wQty:0,wPrice:0,expiry:'',active:true});criados++}
+    }else if(target==='customers'){
+      const rec={name:obj.name,phone:obj.phone||'',email:obj.email||'',doc:obj.doc||'',obs:obj.obs||''};
+      let exist=update&&rec.phone?S.customers.find(c=>c.phone&&c.phone===rec.phone):null;
+      if(exist){Object.assign(exist,rec);atualizados++}
+      else{S.customers.push({id:uid(),...rec,createdAt:new Date().toISOString()});criados++}
+    }
+  });
+  save(target);
+  closeModal();
+  _importState=null;
+  if(target==='products')renderProducts();else renderCustomers();
+  toast(`Importação concluída: ${criados} novo(s), ${atualizados} atualizado(s)${ignorados?', '+ignorados+' ignorado(s)':''}`);
+}
+function _parseNum(v){
+  if(v==null||v==='')return 0;
+  v=String(v).replace(/[R$\s]/g,'');
+  // trata "1.234,56" (BR) e "1,234.56" (US)
+  if(v.includes(',')&&v.includes('.')){
+    if(v.lastIndexOf(',')>v.lastIndexOf('.'))v=v.replace(/\./g,'').replace(',','.'); // BR
+    else v=v.replace(/,/g,''); // US
+  }else if(v.includes(',')){v=v.replace(',','.')}
+  return parseFloat(v)||0;
+}
+// ---- EXPORTAR cada tabela ----
+function exportTable(target){
+  let headers,rows,name;
+  if(target==='products'){
+    name='produtos';
+    headers=['Nome','Código','Categoria','Preço','Custo','Estoque','Estoque mínimo','Promoção','Atacado a partir de','Preço atacado','Validade','Ativo'];
+    rows=S.products.map(p=>[p.name,p.code||'',p.cat||'',fmtN(p.price),fmtN(p.cost||0),p.stock,p.minStock||0,p.promo?fmtN(p.promo):'',p.wQty||'',p.wPrice?fmtN(p.wPrice):'',p.expiry||'',p.active===false?'não':'sim']);
+  }else if(target==='customers'){
+    name='clientes';
+    headers=['Nome','Telefone','E-mail','CPF/CNPJ','Observação','Cadastrado em'];
+    rows=S.customers.map(c=>[c.name,c.phone||'',c.email||'',c.doc||'',c.obs||'',c.createdAt?fmtBR(new Date(c.createdAt)):'']);
+  }else if(target==='users'){
+    name='usuarios';
+    headers=['Nome','Usuário','Perfil','E-mail Google'];
+    rows=S.users.map(u=>[u.name,u.user,u.role==='admin'?'Administrador':'Operador',u.googleEmail||'']);
+  }else if(target==='sales'){
+    name='vendas';
+    headers=['Cupom','Data','Hora','Cliente','Vendedor','Itens','Subtotal','Desconto','Devolvido','Total líquido','Pagamentos','Status'];
+    rows=[...S.sales].sort((a,b)=>new Date(a.date)-new Date(b.date)).map(s=>[
+      String(s.num).padStart(4,'0'),fmtBR(new Date(s.date)),timeStr(s.date),
+      s.customerName||'',s.userName||'',s.items.reduce((a,i)=>a+i.qty,0),
+      fmtN(s.subtotal),fmtN(s.discount||0),fmtN(refundTotal(s)),fmtN(netTotal(s)),
+      s.payments.map(p=>payLabel(p.method)+' '+fmtN(p.amount)).join(' | '),
+      s.status==='ok'?'OK':'Estornada']);
+  }
+  const sep=';';
+  const csv=[headers,...rows].map(r=>r.map(c=>{c=String(c==null?'':c);return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(sep)).join('\r\n');
+  downloadCSV(csv,name+'-'+new Date().toISOString().slice(0,10));
+  toast(name+' exportado(s): '+rows.length+' linha(s)');
+}
+
+/* ========================= RELATÓRIOS PARA DOWNLOAD ========================= */
+function openReportExport(){
+  const hoje=new Date();
+  const ini=new Date(hoje.getFullYear(),hoje.getMonth(),1); // 1º dia do mês
+  const fmtD=d=>d.toISOString().slice(0,10);
+  openModal('Baixar relatório',`
+    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:14px">Escolha o período e o formato. O relatório traz resumo, gráficos e dados detalhados das vendas.</p>
+    <div class="field"><label>Período rápido</label>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="setRepRange('today')">Hoje</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="setRepRange('7d')">7 dias</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="setRepRange('month')">Este mês</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="setRepRange('all')">Tudo</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="field" style="flex:1"><label>De</label><input class="inp" id="repFrom" type="date" value="${fmtD(ini)}"></div>
+      <div class="field" style="flex:1"><label>Até</label><input class="inp" id="repTo" type="date" value="${fmtD(hoje)}"></div>
+    </div>
+    <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-soft);margin:8px 0 8px">Formato</label>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <button class="btn btn-money btn-block" style="justify-content:flex-start;gap:10px" onclick="downloadReportPDF()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:19px;height:19px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg> <div style="text-align:left"><div style="font-weight:700">PDF com gráficos</div><div style="font-size:.74rem;opacity:.8">Abre pra imprimir ou salvar como PDF</div></div></button>
+      <button class="btn btn-ghost btn-block" style="justify-content:flex-start;gap:10px" onclick="downloadReportXLS()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:19px;height:19px"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 3v18M3 9h18"/></svg> <div style="text-align:left"><div style="font-weight:700">Planilha (Excel/CSV)</div><div style="font-size:.74rem;opacity:.7">Dados detalhados pra você mexer</div></div></button>
+      <button class="btn btn-ghost btn-block" style="justify-content:flex-start;gap:10px" onclick="downloadReportReceipt()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:19px;height:19px"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg> <div style="text-align:left"><div style="font-weight:700">Cupom resumo</div><div style="font-size:.74rem;opacity:.7">Recibo curto pra impressora térmica</div></div></button>
+    </div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>`,true);
+}
+function setRepRange(kind){
+  const hoje=new Date();const fmtD=d=>d.toISOString().slice(0,10);
+  let from=new Date(hoje);
+  if(kind==='today')from=new Date(hoje);
+  else if(kind==='7d'){from=new Date(hoje);from.setDate(from.getDate()-6)}
+  else if(kind==='month')from=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  else if(kind==='all'){
+    const datas=S.sales.filter(s=>s.status==='ok').map(s=>new Date(s.date));
+    from=datas.length?new Date(Math.min(...datas)):new Date(hoje);
+  }
+  $('repFrom').value=fmtD(from);$('repTo').value=fmtD(hoje);
+}
+function getReportRange(){
+  const f=$('repFrom').value, t=$('repTo').value;
+  if(!f||!t){toast('Escolha as duas datas','warn');return null}
+  const from=new Date(f+'T00:00:00'), to=new Date(t+'T23:59:59');
+  if(from>to){toast('A data inicial não pode ser depois da final','warn');return null}
+  return {from,to,label:fmtBR(from)+' a '+fmtBR(to)};
+}
+function fmtBR(d){return d.toLocaleDateString('pt-BR')}
+function buildReportData(from,to){
+  const ok=S.sales.filter(s=>{const d=new Date(s.date);return d>=from&&d<=to&&s.status==='ok'});
+  let receita=0,custo=0,descTotal=0,nItens=0,devolucoes=0;
+  const porDia={},porProduto={},porPagamento={},porVendedor={},porCategoria={};
+  ok.forEach(s=>{
+    const ratio=s.subtotal>0?s.total/s.subtotal:1;
+    const liq=netTotal(s);
+    receita+=liq;
+    devolucoes+=refundTotal(s);
+    descTotal+=(s.discount||0);
+    const dia=new Date(s.date).toISOString().slice(0,10);
+    porDia[dia]=(porDia[dia]||0)+liq;
+    s.payments.forEach(p=>porPagamento[p.method]=(porPagamento[p.method]||0)+p.amount);
+    porVendedor[s.userName||'—']=porVendedor[s.userName||'—']||{v:0,n:0};
+    porVendedor[s.userName||'—'].v+=liq;porVendedor[s.userName||'—'].n++;
+    s.items.forEach(i=>{
+      const p=S.products.find(x=>x.id===i.pid);
+      const q=i.qty-refundedQty(s,i.pid);
+      if(q<=0)return;
+      nItens+=q;custo+=(p?.cost||0)*q;
+      porProduto[i.name]=porProduto[i.name]||{q:0,v:0};
+      porProduto[i.name].q+=q;porProduto[i.name].v+=i.price*q*ratio;
+      const cat=p?.cat||'Sem categoria';
+      porCategoria[cat]=(porCategoria[cat]||0)+i.price*q*ratio;
+    });
+  });
+  return {ok,nVendas:ok.length,receita,custo,lucro:receita-custo,descTotal,devolucoes,nItens,
+    ticketMedio:ok.length?receita/ok.length:0,porDia,porProduto,porPagamento,porVendedor,porCategoria};
+}
+// gráfico de barras em SVG (para o PDF)
+function svgBars(data,w,hgt,color){
+  const entries=Object.entries(data);
+  if(!entries.length)return '<p style="color:#999;font-size:12px">Sem dados no período.</p>';
+  const max=Math.max(...entries.map(e=>typeof e[1]==='object'?e[1].v:e[1]),1);
+  const n=entries.length,gap=8,bw=(w-(n-1)*gap)/n;
+  let bars='',labels='';
+  entries.forEach((e,i)=>{
+    const val=typeof e[1]==='object'?e[1].v:e[1];
+    const bh=Math.max(2,val/max*(hgt-40));
+    const x=i*(bw+gap), y=hgt-30-bh;
+    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${color}" rx="3"/>`;
+    bars+=`<text x="${x+bw/2}" y="${y-4}" font-size="9" text-anchor="middle" fill="#333" font-family="monospace">${fmtShort(val)}</text>`;
+    const lb=e[0].length>10?e[0].slice(0,9)+'…':e[0];
+    labels+=`<text x="${x+bw/2}" y="${hgt-14}" font-size="9" text-anchor="middle" fill="#666">${escSvg(lb)}</text>`;
+  });
+  return `<svg width="${w}" height="${hgt}" viewBox="0 0 ${w} ${hgt}" xmlns="http://www.w3.org/2000/svg">${bars}${labels}</svg>`;
+}
+// gráfico de pizza em SVG
+function svgPie(data,size,colors){
+  const entries=Object.entries(data).filter(e=>(typeof e[1]==='object'?e[1].v:e[1])>0);
+  if(!entries.length)return '<p style="color:#999;font-size:12px">Sem dados.</p>';
+  const total=entries.reduce((a,e)=>a+(typeof e[1]==='object'?e[1].v:e[1]),0);
+  const cx=size/2,cy=size/2,r=size/2-4;
+  let ang=-Math.PI/2,paths='';
+  entries.forEach((e,i)=>{
+    const val=typeof e[1]==='object'?e[1].v:e[1];
+    const frac=val/total,a2=ang+frac*2*Math.PI;
+    const x1=cx+r*Math.cos(ang),y1=cy+r*Math.sin(ang);
+    const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+    const large=frac>0.5?1:0;
+    paths+=`<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${colors[i%colors.length]}"/>`;
+    ang=a2;
+  });
+  let legend='';
+  entries.forEach((e,i)=>{
+    const val=typeof e[1]==='object'?e[1].v:e[1];
+    const pct=(val/total*100).toFixed(1);
+    legend+=`<div style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:3px"><span style="width:11px;height:11px;background:${colors[i%colors.length]};border-radius:2px;display:inline-block"></span>${escHtml(e[0])} — ${pct}% (${fmt(val)})</div>`;
+  });
+  return `<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${paths}</svg><div>${legend}</div></div>`;
+}
+function fmtShort(v){if(v>=1000)return (v/1000).toFixed(1)+'k';return Math.round(v).toString()}
+function escSvg(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+/* ---------- PDF (via janela de impressão) ---------- */
+function downloadReportPDF(){
+  const range=getReportRange();if(!range)return;
+  const d=buildReportData(range.from,range.to);
+  const st=S.settings;
+  const C=['#0E5E45','#1A8C68','#36B68A','#7CD4B0','#C3ECDD','#2563EB','#F59E0B','#EF4444'];
+  // top produtos ordenados
+  const topProd=Object.fromEntries(Object.entries(d.porProduto).sort((a,b)=>b[1].v-a[1].v).slice(0,10));
+  const pmLabels={};Object.entries(d.porPagamento).forEach(([k,v])=>pmLabels[payLabel(k)]=v);
+  // dados por dia ordenados
+  const diasOrd=Object.fromEntries(Object.entries(d.porDia).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v])=>[k.slice(8,10)+'/'+k.slice(5,7),v]));
+
+  const linhasProd=Object.entries(d.porProduto).sort((a,b)=>b[1].v-a[1].v).map(([nm,o])=>
+    `<tr><td>${escHtml(nm)}</td><td style="text-align:center">${o.q}</td><td style="text-align:right">${fmt(o.v)}</td></tr>`).join('');
+  const linhasVend=Object.entries(d.porVendedor).sort((a,b)=>b[1].v-a[1].v).map(([nm,o])=>
+    `<tr><td>${escHtml(nm)}</td><td style="text-align:center">${o.n}</td><td style="text-align:right">${fmt(o.v)}</td></tr>`).join('');
+  // detalhamento de cada venda
+  const linhasVendas=d.ok.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(s=>
+    `<tr><td>#${String(s.num).padStart(4,'0')}</td><td>${fmtBR(new Date(s.date))} ${timeStr(s.date)}</td><td>${escHtml(s.customerName||'—')}</td><td>${escHtml(s.userName||'—')}</td><td style="text-align:center">${s.items.reduce((a,i)=>a+i.qty,0)}</td><td style="text-align:right">${fmt(netTotal(s))}</td></tr>`).join('');
+
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório ${escHtml(st.storeName||'PinhoPDV')}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1a1a1a;padding:28px;font-size:13px;line-height:1.5}
+    h1{font-size:22px;color:#0E5E45;margin-bottom:2px}
+    h2{font-size:15px;color:#0E5E45;margin:22px 0 10px;padding-bottom:5px;border-bottom:2px solid #0E5E45}
+    .sub{color:#666;font-size:12px;margin-bottom:4px}
+    .cards{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .card{flex:1;min-width:130px;border:1px solid #ddd;border-radius:8px;padding:11px 13px}
+    .card .l{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#888}
+    .card .v{font-size:19px;font-weight:700;color:#0E5E45;font-family:monospace;margin-top:3px}
+    .card .v.neg{color:#c00}
+    table{width:100%;border-collapse:collapse;margin-top:6px;font-size:12px}
+    th{background:#0E5E45;color:#fff;padding:6px 9px;text-align:left;font-size:11px}
+    td{padding:5px 9px;border-bottom:1px solid #eee}
+    tr:nth-child(even) td{background:#f7faf9}
+    .charts{display:flex;gap:20px;flex-wrap:wrap;margin-top:8px}
+    .chart-box{flex:1;min-width:280px}
+    .foot{margin-top:28px;padding-top:12px;border-top:1px solid #ddd;font-size:11px;color:#999;text-align:center}
+    @media print{body{padding:12px}.no-print{display:none}@page{margin:12mm}}
+    .btn-print{position:fixed;top:14px;right:14px;background:#0E5E45;color:#fff;border:none;padding:11px 20px;border-radius:8px;font-size:14px;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+  </style></head><body>
+  <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+  <h1>${escHtml(st.storeName||'PinhoPDV')}</h1>
+  <div class="sub">${st.doc?'CNPJ/CPF: '+escHtml(st.doc):''}${st.phone?' · '+escHtml(st.phone):''}</div>
+  <div class="sub"><b>Relatório de vendas</b> — período de ${range.label}</div>
+  <div class="sub">Gerado em ${fmtBR(new Date())} às ${timeStr(new Date().toISOString())}</div>
+
+  <div class="cards">
+    <div class="card"><div class="l">Faturamento</div><div class="v">${fmt(d.receita)}</div></div>
+    <div class="card"><div class="l">Nº de vendas</div><div class="v">${d.nVendas}</div></div>
+    <div class="card"><div class="l">Ticket médio</div><div class="v">${fmt(d.ticketMedio)}</div></div>
+    <div class="card"><div class="l">Lucro estimado</div><div class="v ${d.lucro<0?'neg':''}">${fmt(d.lucro)}</div></div>
+    <div class="card"><div class="l">Itens vendidos</div><div class="v">${d.nItens}</div></div>
+  </div>
+  ${(d.descTotal>0||d.devolucoes>0)?`<div class="cards"><div class="card"><div class="l">Descontos concedidos</div><div class="v">${fmt(d.descTotal)}</div></div><div class="card"><div class="l">Devoluções</div><div class="v ${d.devolucoes>0?'neg':''}">${fmt(d.devolucoes)}</div></div><div class="card"><div class="l">Custo das mercadorias</div><div class="v">${fmt(d.custo)}</div></div></div>`:''}
+
+  <h2>Vendas por dia</h2>
+  ${svgBars(diasOrd,720,180,'#1A8C68')}
+
+  <h2>Formas de pagamento e categorias</h2>
+  <div class="charts">
+    <div class="chart-box"><b style="font-size:12px;display:block;margin-bottom:8px">Por forma de pagamento</b>${svgPie(pmLabels,150,C)}</div>
+    <div class="chart-box"><b style="font-size:12px;display:block;margin-bottom:8px">Por categoria</b>${svgPie(d.porCategoria,150,C)}</div>
+  </div>
+
+  <h2>Produtos mais vendidos</h2>
+  ${svgBars(topProd,720,180,'#0E5E45')}
+  <table><thead><tr><th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:right">Faturamento</th></tr></thead><tbody>${linhasProd||'<tr><td colspan="3" style="text-align:center;color:#999">Sem dados</td></tr>'}</tbody></table>
+
+  <h2>Desempenho por vendedor</h2>
+  <table><thead><tr><th>Vendedor</th><th style="text-align:center">Vendas</th><th style="text-align:right">Faturamento</th></tr></thead><tbody>${linhasVend||'<tr><td colspan="3" style="text-align:center;color:#999">Sem dados</td></tr>'}</tbody></table>
+
+  <h2>Detalhamento das vendas (${d.nVendas})</h2>
+  <table><thead><tr><th>Cupom</th><th>Data/hora</th><th>Cliente</th><th>Vendedor</th><th style="text-align:center">Itens</th><th style="text-align:right">Total líq.</th></tr></thead><tbody>${linhasVendas||'<tr><td colspan="6" style="text-align:center;color:#999">Nenhuma venda no período</td></tr>'}</tbody></table>
+
+  <div class="foot">PinhoPDV · Relatório gerado automaticamente · ${escHtml(st.storeName||'')}</div>
+  </body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){toast('Permita pop-ups para abrir o relatório','warn');return}
+  w.document.write(html);w.document.close();
+  closeModal();
+  toast('Relatório aberto — use "Imprimir / Salvar PDF"');
+}
+/* ---------- Excel/CSV detalhado ---------- */
+function downloadReportXLS(){
+  const range=getReportRange();if(!range)return;
+  const d=buildReportData(range.from,range.to);
+  const sep=';',nl='\r\n';
+  const linha=arr=>arr.map(c=>{c=String(c==null?'':c);return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(sep);
+  let out=[];
+  out.push(linha(['RELATÓRIO DE VENDAS - '+(S.settings.storeName||'PinhoPDV')]));
+  out.push(linha(['Período',range.label]));
+  out.push(linha(['Gerado em',fmtBR(new Date())+' '+timeStr(new Date().toISOString())]));
+  out.push('');
+  out.push(linha(['RESUMO']));
+  out.push(linha(['Faturamento',fmtN(d.receita)]));
+  out.push(linha(['Nº de vendas',d.nVendas]));
+  out.push(linha(['Ticket médio',fmtN(d.ticketMedio)]));
+  out.push(linha(['Lucro estimado',fmtN(d.lucro)]));
+  out.push(linha(['Custo das mercadorias',fmtN(d.custo)]));
+  out.push(linha(['Descontos concedidos',fmtN(d.descTotal)]));
+  out.push(linha(['Devoluções',fmtN(d.devolucoes)]));
+  out.push(linha(['Itens vendidos',d.nItens]));
+  out.push('');
+  out.push(linha(['VENDAS POR DIA']));
+  out.push(linha(['Data','Faturamento']));
+  Object.entries(d.porDia).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([k,v])=>out.push(linha([k.split('-').reverse().join('/'),fmtN(v)])));
+  out.push('');
+  out.push(linha(['FORMAS DE PAGAMENTO']));
+  out.push(linha(['Forma','Valor']));
+  Object.entries(d.porPagamento).forEach(([k,v])=>out.push(linha([payLabel(k),fmtN(v)])));
+  out.push('');
+  out.push(linha(['PRODUTOS VENDIDOS']));
+  out.push(linha(['Produto','Quantidade','Faturamento']));
+  Object.entries(d.porProduto).sort((a,b)=>b[1].v-a[1].v).forEach(([nm,o])=>out.push(linha([nm,o.q,fmtN(o.v)])));
+  out.push('');
+  out.push(linha(['POR VENDEDOR']));
+  out.push(linha(['Vendedor','Vendas','Faturamento']));
+  Object.entries(d.porVendedor).sort((a,b)=>b[1].v-a[1].v).forEach(([nm,o])=>out.push(linha([nm,o.n,fmtN(o.v)])));
+  out.push('');
+  out.push(linha(['DETALHAMENTO DAS VENDAS']));
+  out.push(linha(['Cupom','Data','Hora','Cliente','Vendedor','Itens','Subtotal','Desconto','Devolvido','Total líquido','Pagamentos']));
+  d.ok.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(s=>out.push(linha([
+    String(s.num).padStart(4,'0'),fmtBR(new Date(s.date)),timeStr(s.date),
+    s.customerName||'',s.userName||'',s.items.reduce((a,i)=>a+i.qty,0),
+    fmtN(s.subtotal),fmtN(s.discount||0),fmtN(refundTotal(s)),fmtN(netTotal(s)),
+    s.payments.map(p=>payLabel(p.method)+' '+fmtN(p.amount)).join(' | ')
+  ])));
+  downloadCSV(out.join(nl),'relatorio-'+$('repFrom').value+'-a-'+$('repTo').value);
+  closeModal();
+  toast('Planilha exportada');
+}
+/* ---------- Cupom resumo (impressão térmica) ---------- */
+function downloadReportReceipt(){
+  const range=getReportRange();if(!range)return;
+  const d=buildReportData(range.from,range.to);
+  const topProd=Object.entries(d.porProduto).sort((a,b)=>b[1].v-a[1].v).slice(0,8);
+  const st=S.settings;
+  const row=(a,b)=>`<div class="row"><span>${a}</span><span>${b}</span></div>`;
+  $('receiptPrint').innerHTML=`<div class="receipt">
+    <div class="c b" style="font-size:1.1em">${esc(st.storeName||'PinhoPDV')}</div>
+    <div class="c">RELATÓRIO DE VENDAS</div>
+    <div class="c" style="font-size:.8em">${range.label}</div>
+    <div class="c" style="font-size:.8em">Gerado: ${fmtBR(new Date())} ${timeStr(new Date().toISOString())}</div>
+    <hr>
+    ${row('Faturamento','<b>'+fmtN(d.receita)+'</b>')}
+    ${row('Nº de vendas',d.nVendas)}
+    ${row('Ticket médio',fmtN(d.ticketMedio))}
+    ${row('Lucro estimado',fmtN(d.lucro))}
+    ${row('Itens vendidos',d.nItens)}
+    ${d.descTotal>0?row('Descontos',fmtN(d.descTotal)):''}
+    ${d.devolucoes>0?row('Devoluções',fmtN(d.devolucoes)):''}
+    <hr>
+    <div class="b">FORMAS DE PAGAMENTO</div>
+    ${Object.entries(d.porPagamento).map(([k,v])=>row(payLabel(k),fmtN(v))).join('')||'<div class="c">—</div>'}
+    <hr>
+    <div class="b">MAIS VENDIDOS</div>
+    ${topProd.map(([nm,o])=>row(esc(nm.slice(0,20))+' x'+o.q,fmtN(o.v))).join('')||'<div class="c">—</div>'}
+    <hr>
+    <div class="c" style="font-size:.78em">PinhoPDV</div>
+  </div>`;
+  closeModal();
+  setTimeout(()=>window.print(),100);
+}
+/* helper de download CSV com BOM (abre no Excel com acentos certos) */
+function downloadCSV(text,filename){
+  const blob=new Blob(['\uFEFF'+text],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=filename+'.csv';a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ============================================================
+   CENTRAL DE DADOS — importar/exportar CSV de qualquer sistema
+   ============================================================ */
+function parseCSVText(text){
+  text=text.replace(/^\uFEFF/,'');
+  // detecta separador na 1ª linha (fora de aspas)
+  const fl=text.split(/\r?\n/)[0]||'';
+  const cnt={',':0,';':0,'\t':0};let q=false;
+  for(const ch of fl){if(ch==='"')q=!q;else if(!q&&cnt[ch]!==undefined)cnt[ch]++}
+  const sep=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0]||',';
+  const rows=[];let row=[],f='',inQ=false,fieldStart=true;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],nx=text[i+1];
+    if(inQ){
+      if(ch==='"'&&nx==='"'){f+='"';i++}
+      else if(ch==='"')inQ=false;
+      else f+=ch;
+    }else{
+      if(ch==='"'&&fieldStart){inQ=true;fieldStart=false}
+      else if(ch===sep){row.push(f);f='';fieldStart=true}
+      else if(ch==='\n'){row.push(f);rows.push(row);row=[];f='';fieldStart=true}
+      else if(ch==='\r'){}
+      else{f+=ch;fieldStart=false}
+    }
+  }
+  if(f!==''||row.length){row.push(f);rows.push(row)}
+  return rows.filter(r=>r.some(c=>String(c).trim()!==''));
+}
+// converte texto numérico em vários formatos (1.234,56 ou 1,234.56 ou 27.90) para Number
+function parseNum(v){
+  if(v==null)return 0;
+  let s=String(v).trim().replace(/[R$\s]/gi,'');
+  if(!s)return 0;
+  if(s.includes(',')&&s.includes('.')){
+    // o último separador é o decimal
+    if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');
+    else s=s.replace(/,/g,'');
+  }else if(s.includes(',')){s=s.replace(/\./g,'').replace(',','.')}
+  const n=parseFloat(s);return isFinite(n)?n:0;
+}
+// schemas das tabelas: campos e sinônimos para auto-mapear
+const DATA_SCHEMAS={
+  products:{
+    label:'Produtos', store:'products',
+    fields:[
+      {key:'name',label:'Nome',req:true,syn:['nome','produto','descricao','descrição','description','title','item']},
+      {key:'code',label:'Código de barras',syn:['codigo','código','code','barcode','ean','sku','cod']},
+      {key:'cat',label:'Categoria',syn:['categoria','category','grupo','tipo','setor']},
+      {key:'price',label:'Preço de venda',num:true,req:true,syn:['preco','preço','price','valor','venda','preco_venda','vlr']},
+      {key:'cost',label:'Custo',num:true,syn:['custo','cost','preco_custo','custo_unitario']},
+      {key:'stock',label:'Estoque',num:true,syn:['estoque','stock','quantidade','qtd','qty','saldo']},
+      {key:'minStock',label:'Estoque mínimo',num:true,syn:['minimo','mínimo','estoque_minimo','min','minstock']},
+      {key:'promo',label:'Preço promocional',num:true,syn:['promocao','promoção','promo','oferta']},
+    ]
+  },
+  customers:{
+    label:'Clientes', store:'customers',
+    fields:[
+      {key:'name',label:'Nome',req:true,syn:['nome','cliente','name','razao','razão']},
+      {key:'phone',label:'Telefone',syn:['telefone','fone','phone','celular','whatsapp','contato','tel']},
+      {key:'doc',label:'CPF/CNPJ',syn:['cpf','cnpj','documento','doc','rg']},
+      {key:'note',label:'Observação',syn:['obs','observacao','observação','note','nota','endereco','endereço']},
+    ]
+  },
+  users:{
+    label:'Usuários', store:'users',
+    fields:[
+      {key:'name',label:'Nome',req:true,syn:['nome','name','usuario','usuário']},
+      {key:'user',label:'Login',req:true,syn:['login','user','usuario','usuário','email','e-mail']},
+      {key:'role',label:'Perfil (admin/operador)',syn:['perfil','role','tipo','cargo','funcao','função']},
+    ]
+  }
+};
+function openDataCenter(){
+  openModal('Importar / Exportar dados',`
+    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:16px">Exporte cada tabela em planilha (CSV, abre no Excel) ou importe de outro sistema. Na importação você escolhe qual coluna é cada campo — funciona com arquivo de qualquer aplicação.</p>
+    <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-soft);margin-bottom:9px">Exportar planilha (.csv)</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+      <button class="btn btn-ghost btn-sm" onclick="exportTable('products')">📦 Produtos</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportTable('customers')">👥 Clientes</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportSalesXLS()">🧾 Vendas</button>
+      ${can('config')?`<button class="btn btn-ghost btn-sm" onclick="exportTable('users')">🔑 Usuários</button>`:''}
+    </div>
+    <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-soft);margin-bottom:9px">Importar de planilha (.csv)</label>
+    <p style="font-size:.78rem;color:var(--txt-soft);margin-bottom:10px">Escolha a tabela e depois o arquivo:</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-money btn-sm" onclick="pickImport('products')">📦 Importar produtos</button>
+      <button class="btn btn-money btn-sm" onclick="pickImport('customers')">👥 Importar clientes</button>
+      ${can('config')?`<button class="btn btn-money btn-sm" onclick="pickImport('users')">🔑 Importar usuários</button>`:''}
+    </div>
+    <input type="file" id="csvImportFile" accept=".csv,.txt,text/csv" style="display:none">
+    <p style="font-size:.74rem;color:var(--txt-soft);margin-top:16px;line-height:1.5">💡 Dica: vendas são exportadas completas, mas a importação cuida de produtos, clientes e usuários — que é o que normalmente se migra de outro sistema.</p>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>`,true);
+}
+function exportTable(which){
+  const sc=DATA_SCHEMAS[which];
+  const rows=[sc.fields.map(f=>f.label)];
+  S[sc.store].forEach(rec=>{
+    rows.push(sc.fields.map(f=>{
+      let v=rec[f.key];
+      if(f.num)return v==null?'':fmtN(v);
+      return v==null?'':String(v);
+    }));
+  });
+  const sep=';',nl='\r\n';
+  const csv=rows.map(r=>r.map(c=>{c=String(c==null?'':c);return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(sep)).join(nl);
+  downloadCSV(csv,sc.label.toLowerCase()+'-pinhopdv-'+new Date().toISOString().slice(0,10));
+  toast(sc.label+' exportados');
+}
+let _importTarget=null,_importRows=null;
+function pickImport(which){
+  _importTarget=which;
+  let inp=$('csvImportFile');
+  if(!inp){inp=document.createElement('input');inp.type='file';inp.id='csvImportFile';inp.accept='.csv,.txt,text/csv';inp.style.display='none';document.body.appendChild(inp)}
+  inp.onchange=()=>{
+    const f=inp.files[0];if(!f){return}
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const rows=parseCSVText(r.result);
+        if(rows.length<2){toast('O arquivo precisa ter cabeçalho e ao menos uma linha','warn');return}
+        _importRows=rows;
+        openImportMapper(which,rows);
+      }catch(e){toast('Não consegui ler o arquivo CSV','err')}
+      inp.value='';
+    };
+    r.readAsText(f,'UTF-8');
+  };
+  inp.click();
+}
+function guessColumn(headers,syn){
+  const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+  const H=headers.map(norm);
+  for(const s of syn){const i=H.indexOf(norm(s));if(i>=0)return i}
+  // match parcial
+  for(let i=0;i<H.length;i++)for(const s of syn){if(H[i].includes(norm(s))||norm(s).includes(H[i])){if(H[i].length>2)return i}}
+  return -1;
+}
+function openImportMapper(which,rows){
+  const sc=DATA_SCHEMAS[which];
+  const headers=rows[0];
+  const sampleN=Math.min(3,rows.length-1);
+  const optsFor=sel=>headers.map((h,i)=>`<option value="${i}" ${i===sel?'selected':''}>${esc(h||('Coluna '+(i+1)))}</option>`).join('');
+  const fieldRows=sc.fields.map(f=>{
+    const guess=guessColumn(headers,f.syn||[f.key]);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+      <div style="flex:1;font-size:.86rem"><b>${f.label}</b>${f.req?' <span style="color:var(--danger)">*</span>':''}${f.num?' <span class="chip chip-gray" style="font-size:.6rem">número</span>':''}</div>
+      <select class="inp mapSel" data-key="${f.key}" data-num="${f.num?1:0}" data-req="${f.req?1:0}" style="flex:1;min-width:0;padding:7px">
+        <option value="-1">— não importar —</option>
+        ${optsFor(guess)}
+      </select>
+    </div>`;
+  }).join('');
+  // prévia das primeiras linhas
+  let preview='<div style="overflow-x:auto;margin-top:12px"><table style="font-size:.72rem;border-collapse:collapse;width:100%"><thead><tr>'+headers.map(h=>`<th style="background:var(--ink);color:#fff;padding:4px 7px;text-align:left;white-space:nowrap">${esc(h)}</th>`).join('')+'</tr></thead><tbody>';
+  for(let i=1;i<=sampleN;i++)preview+='<tr>'+rows[i].map(c=>`<td style="padding:3px 7px;border-bottom:1px solid var(--line);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(c)}</td>`).join('')+'</tr>';
+  preview+='</tbody></table></div>';
+  openModal('Importar '+sc.label+' — relacionar colunas',`
+    <p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:6px">Encontrei <b>${rows.length-1}</b> linha(s). Confira a correspondência (já tentei adivinhar):</p>
+    ${fieldRows}
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:.84rem"><input type="checkbox" id="impReplace" style="width:16px;height:16px;accent-color:var(--brand)"> Substituir tudo (apaga os ${sc.label.toLowerCase()} atuais antes de importar)</label>
+    <details style="margin-top:10px"><summary style="font-size:.8rem;color:var(--brand);cursor:pointer">Ver prévia do arquivo</summary>${preview}</details>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="runImport('${which}')">Importar ${rows.length-1} registro(s)</button>`,true);
+}
+function runImport(which){
+  const sc=DATA_SCHEMAS[which];
+  const map={};let faltaReq=null;
+  document.querySelectorAll('.mapSel').forEach(sel=>{
+    const idx=parseInt(sel.value);
+    map[sel.dataset.key]={idx,num:sel.dataset.num==='1'};
+    if(sel.dataset.req==='1'&&idx<0)faltaReq=sc.fields.find(f=>f.key===sel.dataset.key).label;
+  });
+  if(faltaReq){toast('Escolha a coluna para: '+faltaReq,'warn');return}
+  const replace=$('impReplace').checked;
+  const rows=_importRows.slice(1);
+  let added=0,updated=0,skipped=0;
+  const novos=[];
+  rows.forEach(r=>{
+    const rec={};
+    sc.fields.forEach(f=>{
+      const m=map[f.key];if(!m||m.idx<0)return;
+      let v=r[m.idx];
+      rec[f.key]=m.num?parseNum(v):(v==null?'':String(v).trim());
+    });
+    if(!rec.name||!String(rec.name).trim()){skipped++;return}
+    novos.push(rec);
+  });
+  if(!novos.length){toast('Nenhuma linha válida encontrada (faltou o nome?)','warn');return}
+  const finish=()=>{
+    if(replace){
+      if(which==='users'){
+        // segurança: nunca apagar todos os admins; garante ao menos 1 admin
+        const temAdmin=novos.some(n=>/admin/i.test(n.role||''));
+        if(!temAdmin){toast('A lista precisa ter ao menos um administrador','err');return}
+      }
+      S[sc.store]=[];
+    }
+    novos.forEach(rec=>{
+      if(which==='products'){
+        const ex=rec.code?S.products.find(p=>String(p.code)===String(rec.code)&&rec.code):null;
+        if(ex){Object.assign(ex,{name:rec.name,cat:rec.cat||ex.cat,price:rec.price||ex.price,cost:rec.cost??ex.cost,stock:rec.stock??ex.stock,minStock:rec.minStock??ex.minStock,promo:rec.promo??ex.promo});updated++}
+        else{S.products.push({id:uid(),name:rec.name,code:rec.code||'',cat:rec.cat||'Geral',price:rec.price||0,cost:rec.cost||0,stock:rec.stock||0,minStock:rec.minStock||0,promo:rec.promo||0,wQty:0,wPrice:0,expiry:'',active:true});added++}
+      }else if(which==='customers'){
+        const ex=rec.doc?S.customers.find(c=>c.doc&&c.doc===rec.doc):null;
+        if(ex){Object.assign(ex,rec);updated++}
+        else{S.customers.push({id:uid(),name:rec.name,phone:rec.phone||'',doc:rec.doc||'',note:rec.note||'',createdAt:new Date().toISOString()});added++}
+      }else if(which==='users'){
+        const role=/admin/i.test(rec.role||'')?'admin':'operador';
+        const login=String(rec.user||rec.name).toLowerCase().trim();
+        const ex=S.users.find(u=>u.user===login);
+        if(ex){ex.name=rec.name;ex.role=role;updated++}
+        else{S.users.push({id:uid(),name:rec.name,user:login,role,hash:'',mustChange:true,needPass:true});added++}
+      }
+    });
+    save(sc.store);
+    closeModal();
+    const extra=which==='users'?' (defina a senha de cada novo usuário em Configurações)':'';
+    toast(`Importação concluída: ${added} novo(s), ${updated} atualizado(s)${skipped?', '+skipped+' ignorado(s)':''}`+extra);
+    if(currentScreen===which||which==='products'&&currentScreen==='produtos')go(currentScreen);
+    if(typeof renderConfig==='function'&&currentScreen==='config')renderConfig();
+  };
+  askConfirm('Confirmar importação',
+    `Vou importar <b>${novos.length}</b> ${sc.label.toLowerCase()}.${replace?' Os dados atuais serão <b>apagados</b> antes.':' Itens com mesmo '+(which==='products'?'código':'documento')+' serão atualizados.'}`,
+    'Importar',finish);
 }
 function exportBackup(){
   const data={app:'pinhopdv',version:1,exportedAt:new Date().toISOString(),
