@@ -1885,7 +1885,7 @@ const S={
   customers:DB.get('customers',[]),
   sales:DB.get('sales',[]),
   cashSessions:DB.get('cashSessions',[]),
-  settings:DB.get('settings',{storeName:'PinhoPDV',doc:'',address:'',phone:'',footer:'Obrigado pela preferência! Volte sempre.',allowNoStock:true,theme:'verde',pixKey:'',pixCity:'',autoPrint:false,commission:0,googleClientId:'',googleAutoCreate:false}),
+  settings:DB.get('settings',{storeName:'PinhoPDV',doc:'',address:'',phone:'',footer:'Obrigado pela preferência! Volte sempre.',allowNoStock:true,theme:'verde',pixKey:'',pixCity:'',pixType:'email',autoPrint:false,commission:0,googleClientId:'',googleAutoCreate:false}),
   holds:DB.get('holds',[]),
   seq:DB.get('seq',{sale:0})
 };
@@ -1914,8 +1914,18 @@ async function sha256(t){
     let h=5381;const s='cv·'+t;for(let i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))>>>0}return 'djb2:'+h.toString(16)}
 }
 function pixCRC(s){let c=0xFFFF;for(let i=0;i<s.length;i++){c^=s.charCodeAt(i)<<8;for(let j=0;j<8;j++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
+function normalizePixKey(raw,type){
+  raw=(raw||'').trim();
+  if(type==='cpf'){const d=raw.replace(/\D/g,'');return{ok:d.length===11,key:d,err:d.length!==11?'O CPF deve ter 11 dígitos':''}}
+  if(type==='cnpj'){const d=raw.replace(/\D/g,'');return{ok:d.length===14,key:d,err:d.length!==14?'O CNPJ deve ter 14 dígitos':''}}
+  if(type==='phone'){let d=raw.replace(/\D/g,'').replace(/^0+/,'');if(!d.startsWith('55'))d='55'+d;const ok=d.length===12||d.length===13;return{ok,key:'+'+d,err:ok?'':'Telefone inválido. Use DDD + número, ex.: 85 99999-8888'}}
+  if(type==='email'){const e=raw.toLowerCase();const ok=/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);return{ok,key:e,err:ok?'':'E-mail inválido'}}
+  if(type==='random'){const ok=/^[0-9a-fA-F-]{32,36}$/.test(raw);return{ok,key:raw.toLowerCase(),err:ok?'':'Chave aleatória inválida (use o código gerado pelo banco)'}}
+  return{ok:!!raw,key:raw,err:''};
+}
 function pixPayload(amount){
-  const key=(S.settings.pixKey||'').trim();if(!key)return null;
+  const norm=normalizePixKey(S.settings.pixKey,S.settings.pixType||'email');
+  const key=norm.key;if(!key)return null;
   const f=(id,v)=>id+String(v.length).padStart(2,'0')+v;
   const name=(S.settings.storeName||'PINHOPDV').toUpperCase().replace(/[^ -~]/g,'').slice(0,25)||'LOJA';
   const city=(S.settings.pixCity||'CIDADE').toUpperCase().replace(/[^ -~]/g,'').slice(0,15)||'CIDADE';
@@ -3076,7 +3086,14 @@ function renderConfig(){
         <div class="form-grid">
           <div class="field full"><label>Nome da loja</label><input class="inp" id="stNome" value="${esc(st.storeName)}"></div>
           <div class="field"><label>CNPJ / CPF</label><input class="inp money" id="stDoc" value="${esc(st.doc)}"></div>
-          <div class="field full"><label>Chave PIX (para QR Code na cobrança)</label><input class="inp" id="stPixKey" value="${esc(st.pixKey||'')}" placeholder="e-mail, telefone, CPF/CNPJ ou chave aleatória"></div>
+          <div class="field"><label>Tipo da chave PIX</label><select class="inp" id="stPixType" onchange="pixTypeHint()">
+            <option value="cpf" ${st.pixType==='cpf'?'selected':''}>CPF</option>
+            <option value="cnpj" ${st.pixType==='cnpj'?'selected':''}>CNPJ</option>
+            <option value="phone" ${st.pixType==='phone'?'selected':''}>Telefone (celular)</option>
+            <option value="email" ${(st.pixType==='email'||!st.pixType)?'selected':''}>E-mail</option>
+            <option value="random" ${st.pixType==='random'?'selected':''}>Chave aleatória</option>
+          </select></div>
+          <div class="field"><label>Chave PIX (para o QR Code)</label><input class="inp" id="stPixKey" value="${esc(st.pixKey||'')}" placeholder=""><p id="pixHint" style="font-size:.76rem;color:var(--txt-soft);margin-top:6px;line-height:1.5"></p></div>
           <div class="field"><label>Cidade da conta PIX</label><input class="inp" id="stPixCity" value="${esc(st.pixCity||'')}" placeholder="Ex.: Fortaleza"></div>
           <div class="field"><label>Telefone</label><input class="inp" id="stFone" value="${esc(st.phone)}"></div>
           <div class="field full"><label>Endereço</label><input class="inp" id="stEnd" value="${esc(st.address)}"></div>
@@ -3116,9 +3133,30 @@ function renderConfig(){
       <p style="font-size:.76rem;color:var(--txt-soft);margin-top:10px;line-height:1.5"><b>Administrador:</b> acesso total.<br><b>Operador:</b> vende, consulta produtos/clientes e movimenta o caixa — sem acesso a relatórios, configurações e estornos.</p>
     </div>
   </div>`;
+  setTimeout(pixTypeHint,30);
+}
+function pixTypeHint(){
+  const sel=$('stPixType');if(!sel)return;
+  const t=sel.value, inp=$('stPixKey'), hint=$('pixHint');
+  const cfg={
+    cpf:{ph:'12345678900',msg:'Digite só os números do CPF. Pontos e traços são removidos automaticamente.'},
+    cnpj:{ph:'12345678000190',msg:'Digite só os números do CNPJ.'},
+    phone:{ph:'85 99999-8888',msg:'Telefone celular com DDD. O código do país (+55) é adicionado automaticamente.'},
+    email:{ph:'sualoja@email.com',msg:'O mesmo e-mail que você cadastrou como chave PIX no seu banco.'},
+    random:{ph:'cole a chave aleatória do banco',msg:'A chave aleatória (EVP) é o código gerado pelo app do seu banco.'}
+  }[t]||{ph:'',msg:''};
+  if(inp)inp.placeholder=cfg.ph;
+  if(hint)hint.textContent=cfg.msg;
 }
 function saveSettings(){
-  Object.assign(S.settings,{storeName:$('stNome').value.trim()||'PinhoPDV',doc:$('stDoc').value.trim(),phone:$('stFone').value.trim(),address:$('stEnd').value.trim(),footer:$('stFoot').value.trim(),allowNoStock:$('stNoStock').checked,autoPrint:$('stAutoPrint').checked,pixKey:$('stPixKey').value.trim(),pixCity:$('stPixCity').value.trim(),googleClientId:$('stGoogleId').value.trim(),googleAutoCreate:$('stGoogleAuto').checked});
+  Object.assign(S.settings,{storeName:$('stNome').value.trim()||'PinhoPDV',doc:$('stDoc').value.trim(),phone:$('stFone').value.trim(),address:$('stEnd').value.trim(),footer:$('stFoot').value.trim(),allowNoStock:$('stNoStock').checked,autoPrint:$('stAutoPrint').checked,pixCity:$('stPixCity').value.trim(),googleClientId:$('stGoogleId').value.trim(),googleAutoCreate:$('stGoogleAuto').checked});
+  // PIX: valida e formata a chave conforme o tipo
+  const ptype=$('stPixType').value, praw=$('stPixKey').value.trim();
+  if(praw){
+    const norm=normalizePixKey(praw,ptype);
+    if(!norm.ok){toast(norm.err||'Chave PIX inválida','err');return}
+    S.settings.pixType=ptype;S.settings.pixKey=praw;
+  }else{S.settings.pixType=ptype;S.settings.pixKey=''}
   save('settings');applyStoreName();_gsiReady=false;toast('Dados da loja salvos');
 }
 function openUserModal(id){
