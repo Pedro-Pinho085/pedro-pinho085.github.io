@@ -97,6 +97,7 @@ h1,h2,h3{font-family:var(--disp);color:var(--ink);letter-spacing:-.01em}
 .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none!important}
 .login-hint{margin-top:16px;font-size:.78rem;color:var(--txt-soft);text-align:center;background:var(--brand-soft);border-radius:8px;padding:10px;line-height:1.5}
 .login-hint code{font-family:var(--mono);background:#fff;padding:1px 6px;border-radius:4px;color:var(--brand);font-size:.75rem}
+.avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
 
 /* ---------- APP SHELL ---------- */
 #app{display:none;min-height:100vh}
@@ -113,7 +114,9 @@ h1,h2,h3{font-family:var(--disp);color:var(--ink);letter-spacing:-.01em}
 .nav-item.on{background:var(--brand-bright);color:#fff;box-shadow:0 2px 10px rgba(var(--bright-rgb),.35)}
 .nav-item .kbd{margin-left:auto}
 .kbd{font-family:var(--mono);font-size:.62rem;border:1px solid rgba(255,255,255,.22);border-radius:4px;padding:1px 5px;opacity:.6}
-.sb-foot{padding:14px;border-top:1px solid rgba(255,255,255,.07)}
+.sb-foot{padding:14px;border-top:1px solid rgba(255,255,255,.07);flex-shrink:0}
+button.sb-user{width:100%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);border-radius:11px;padding:9px 11px;cursor:pointer;transition:background .12s}
+button.sb-user:hover{background:rgba(255,255,255,.09)}
 .sb-user{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--brand-bright);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
 .sb-user .nm{font-size:.85rem;font-weight:600;color:#fff;line-height:1.2}
@@ -173,10 +176,10 @@ tbody tr:hover{background:#FAFAF4}
 #screen-pdv.on{display:flex}
 .pdv-wrap{display:flex;flex:1;min-height:100vh}
 .pdv-left{flex:1;display:flex;flex-direction:column;padding:22px 24px;min-width:0}
-.pdv-search-row{display:flex;gap:10px;margin-bottom:16px}
-.pdv-search{position:relative;flex:1}
+.pdv-search-row{display:flex;flex-wrap:nowrap;gap:10px;margin-bottom:16px;align-items:center}
+.pdv-search{position:relative;flex:1;min-width:0}
 .pdv-search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:19px;height:19px;color:var(--txt-soft)}
-.pdv-search input{width:100%;padding:15px 15px 15px 46px;border:2px solid var(--line);border-radius:12px;font-size:1.05rem;background:var(--surface);box-shadow:var(--shadow);transition:border-color .15s}
+.pdv-search input{width:100%;height:54px;padding:0 15px 0 46px;border:2px solid var(--line);border-radius:12px;font-size:1.05rem;background:var(--surface);box-shadow:var(--shadow);transition:border-color .15s}
 .pdv-search input:focus{border-color:var(--brand-bright);outline:none}
 .pdv-hint{font-size:.72rem;color:var(--txt-soft);margin:-8px 0 14px 4px;font-family:var(--mono)}
 .cat-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:8px;scrollbar-width:thin}
@@ -311,7 +314,10 @@ tbody tr:hover{background:#FAFAF4}
 .lbl .cd{font-family:var(--mono);font-size:8px;letter-spacing:.5px;color:#000}
 @media print{.no-print-label{display:none!important}}
 /* ---------- LEITOR POR CÂMERA ---------- */
-.scan-btn{flex-shrink:0;width:42px;height:42px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--brand);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s}
+.scan-btn{flex-shrink:0;width:42px;height:42px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--brand);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;padding:0}
+/* botão da câmera ancorado DENTRO do campo, à direita (centralizado vertical) */
+.pdv-search .scan-btn{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:9px;box-shadow:none;border:1.5px solid var(--line)}
+.pdv-search input{padding-right:56px!important}
 .scan-btn:hover{background:var(--brand-soft);border-color:var(--brand-bright)}
 .scan-btn svg{width:21px;height:21px}
 #scanModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,14,11,.92);z-index:300;padding:20px}
@@ -421,6 +427,10 @@ tbody tr:hover{background:#FAFAF4}
       <div class="field"><label>Usuário</label><input class="inp" id="loginUser" autocomplete="username" placeholder="seu usuário"></div>
       <div class="field"><label>Senha</label><input class="inp" id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-money btn-block" onclick="doLogin()">Entrar no caixa</button>
+      <div id="googleArea" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--txt-soft);font-size:.78rem"><div style="flex:1;height:1px;background:var(--line)"></div>ou<div style="flex:1;height:1px;background:var(--line)"></div></div>
+        <div id="gBtnWrap" style="display:flex;justify-content:center;min-height:44px"></div>
+      </div>
       <div class="login-hint" id="loginHint">Primeiro acesso: usuário <code>admin</code> · senha <code>admin123</code><br>Troque a senha em Configurações → Usuários.</div>
     </div>
   </div>
@@ -444,11 +454,12 @@ tbody tr:hover{background:#FAFAF4}
   </nav>
   <div class="sb-foot">
     <div class="cash-pill closed" id="cashPill"><span class="dot"></span><span id="cashPillTxt">Caixa fechado</span></div>
-    <div class="sb-user"><div class="avatar" id="userAvatar">A</div><div><div class="nm" id="userName">—</div><div class="rl" id="userRole">—</div></div></div>
+    <button class="sb-user" id="sbUserBtn" onclick="openAccountMenu()" title="Conta e usuários"><div class="avatar" id="userAvatar">A</div><div style="flex:1;min-width:0;text-align:left"><div class="nm" id="userName">—</div><div class="rl" id="userRole">—</div></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;opacity:.5;flex-shrink:0"><path d="M9 6l6 6-6 6"/></svg></button>
     <button class="btn btn-money btn-sm btn-block" id="installBtn" style="display:none;margin-bottom:8px;align-items:center;justify-content:center;gap:7px" onclick="installApp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg> Instalar app</button>
     <div style="display:flex;gap:8px">
       <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.18);color:#AFC3B8;flex:0 0 auto;padding:8px 11px" onclick="openThemeModal()" title="Cor do sistema" aria-label="Cor do sistema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px"><path d="M12 21a9 9 0 110-18c4.97 0 9 3.58 9 8 0 2.76-2.24 5-5 5h-1.7c-.83 0-1.5.67-1.5 1.5 0 .37.14.71.36.97.22.27.34.61.34.98A1.55 1.55 0 0112 21z"/><circle cx="7.5" cy="11.5" r=".6" fill="currentColor"/><circle cx="10.8" cy="7.6" r=".6" fill="currentColor"/><circle cx="15.4" cy="9.3" r=".6" fill="currentColor"/></svg></button>
-      <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.18);color:#AFC3B8;flex:1" onclick="logout()">Sair</button>
+      <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.18);color:#AFC3B8;flex:1" onclick="switchUser()">Trocar usuário</button>
+      <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,.18);color:#AFC3B8;flex:0 0 auto;padding:8px 12px" onclick="logout()" title="Sair">Sair</button>
     </div>
   </div>
 </aside>
@@ -1874,7 +1885,7 @@ const S={
   customers:DB.get('customers',[]),
   sales:DB.get('sales',[]),
   cashSessions:DB.get('cashSessions',[]),
-  settings:DB.get('settings',{storeName:'PinhoPDV',doc:'',address:'',phone:'',footer:'Obrigado pela preferência! Volte sempre.',allowNoStock:true,theme:'verde',pixKey:'',pixCity:'',autoPrint:false,commission:0}),
+  settings:DB.get('settings',{storeName:'PinhoPDV',doc:'',address:'',phone:'',footer:'Obrigado pela preferência! Volte sempre.',allowNoStock:true,theme:'verde',pixKey:'',pixCity:'',autoPrint:false,commission:0,googleClientId:'',googleAutoCreate:false}),
   holds:DB.get('holds',[]),
   seq:DB.get('seq',{sale:0})
 };
@@ -2081,15 +2092,144 @@ async function doLogin(){
   if(found.mustChange)toast('Por segurança, troque a senha padrão em Configurações','warn');
 }
 function logout(){
+  if(window.google?.accounts?.id)try{google.accounts.id.disableAutoSelect()}catch(e){}
   session=null;DB.del('session');
   $('app').classList.remove('on');$('loginScreen').style.display='flex';
   $('loginUser').value='';$('loginPass').value='';
+  initGoogleLogin();
+}
+function switchUser(){
+  // volta à tela de login mantendo os dados; ideal para trocar de operador no balcão
+  toggleSidebar(false);
+  session=null;DB.del('session');
+  $('app').classList.remove('on');$('loginScreen').style.display='flex';
+  $('loginUser').value='';$('loginPass').value='';
+  setTimeout(()=>$('loginUser')?.focus(),80);
+  initGoogleLogin();
+  toast('Faça login com outro usuário');
+}
+/* ===================== LOGIN COM GOOGLE ===================== */
+let _gsiLoaded=false,_gsiReady=false;
+function decodeJWT(token){
+  try{
+    const p=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    const json=decodeURIComponent(atob(p).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(json);
+  }catch(e){return null}
+}
+function loadGoogleScript(){
+  return new Promise((resolve,reject)=>{
+    if(window.google&&window.google.accounts&&window.google.accounts.id)return resolve();
+    if(_gsiLoaded){const t=setInterval(()=>{if(window.google?.accounts?.id){clearInterval(t);resolve()}},120);setTimeout(()=>{clearInterval(t);reject()},8000);return}
+    _gsiLoaded=true;
+    const s=document.createElement('script');
+    s.src='https://accounts.google.com/gsi/client';s.async=true;s.defer=true;
+    s.onload=()=>resolve();s.onerror=()=>reject();
+    document.head.appendChild(s);
+  });
+}
+async function initGoogleLogin(){
+  const cid=(S.settings.googleClientId||'').trim();
+  const area=$('googleArea');if(!area)return;
+  if(!cid){area.style.display='none';return}
+  area.style.display='block';
+  try{
+    await loadGoogleScript();
+    google.accounts.id.initialize({client_id:cid,callback:onGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
+    const wrap=$('gBtnWrap');wrap.innerHTML='';
+    google.accounts.id.renderButton(wrap,{theme:'outline',size:'large',text:'signin_with',shape:'rectangular',logo_alignment:'center',width:280,locale:'pt-BR'});
+    _gsiReady=true;
+  }catch(e){
+    $('gBtnWrap').innerHTML='<p style="font-size:.78rem;color:var(--danger);text-align:center">Não foi possível carregar o login do Google. Verifique a conexão ou o Client ID.</p>';
+  }
+}
+async function onGoogleCredential(resp){
+  const data=decodeJWT(resp.credential);
+  if(!data||!data.email){return toast('Não foi possível ler a conta Google','err')}
+  if(data.email_verified===false){return toast('Este e-mail Google não está verificado','err')}
+  const email=data.email.toLowerCase(),sub=data.sub;
+  // 1) já existe usuário vinculado a este Google (por sub ou e-mail)?
+  let u=S.users.find(x=>x.googleSub===sub)||S.users.find(x=>(x.googleEmail||'').toLowerCase()===email)||S.users.find(x=>(x.email||'').toLowerCase()===email);
+  if(u){
+    if(!u.googleSub){u.googleSub=sub;u.googleEmail=email;save('users')}
+    finishGoogleLogin(u,data);return;
+  }
+  // 2) não vinculado: criar operador (se permitido) ou pedir vínculo a um admin
+  if(S.settings.googleAutoCreate){
+    u={id:uid(),name:data.name||email.split('@')[0],user:email,role:'operador',googleSub:sub,googleEmail:email,picture:data.picture||''};
+    S.users.push(u);save('users');
+    finishGoogleLogin(u,data);
+    toast('Conta Google cadastrada como operador');
+    return;
+  }
+  // pede credencial de um admin para autorizar o vínculo
+  pendingGoogle={sub,email,name:data.name||email.split('@')[0],picture:data.picture||'',data};
+  openModal('Vincular conta Google',`
+    <div style="display:flex;align-items:center;gap:12px;background:var(--brand-soft);border-radius:10px;padding:12px;margin-bottom:14px">
+      ${data.picture?`<img src="${esc(data.picture)}" style="width:42px;height:42px;border-radius:50%" referrerpolicy="no-referrer">`:''}
+      <div style="min-width:0"><b>${esc(data.name||'')}</b><br><span style="font-size:.8rem;color:var(--txt-soft);word-break:break-all">${esc(email)}</span></div>
+    </div>
+    <p style="font-size:.85rem;color:var(--txt-soft);margin-bottom:12px">Esta conta Google ainda não está vinculada. Um administrador precisa autorizar, escolhendo a qual usuário do sistema ela pertence.</p>
+    <div class="field"><label>Usuário do sistema</label><select class="inp" id="gLinkUser">${S.users.map(x=>`<option value="${x.id}">${esc(x.name)} (${esc(x.user)}${x.role==='admin'?' · admin':''})</option>`).join('')}</select></div>
+    <div class="field"><label>Senha do administrador (para confirmar)</label><input class="inp" id="gAdminPass" type="password" placeholder="senha de um administrador" onkeydown="if(event.key==='Enter')confirmGoogleLink()"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal();pendingGoogle=null">Cancelar</button><button class="btn btn-primary" onclick="confirmGoogleLink()">Vincular e entrar</button>`);
+}
+let pendingGoogle=null;
+async function confirmGoogleLink(){
+  if(!pendingGoogle)return;
+  const targetId=$('gLinkUser').value;
+  const pass=$('gAdminPass').value;
+  if(!pass)return toast('Digite a senha de um administrador','warn');
+  const ph=await sha256(pass);
+  const admin=S.users.find(x=>x.role==='admin'&&x.hash===ph);
+  if(!admin)return toast('Senha de administrador inválida','err');
+  const u=S.users.find(x=>x.id===targetId);if(!u)return toast('Usuário não encontrado','err');
+  if(S.users.some(x=>x.googleSub===pendingGoogle.sub&&x.id!==u.id))return toast('Esta conta Google já está vinculada a outro usuário','err');
+  u.googleSub=pendingGoogle.sub;u.googleEmail=pendingGoogle.email;if(!u.picture)u.picture=pendingGoogle.picture;
+  save('users');
+  const data=pendingGoogle.data;pendingGoogle=null;
+  closeModal();finishGoogleLogin(u,data);
+  toast('Conta Google vinculada a '+u.name);
+}
+function finishGoogleLogin(u,data){
+  session={id:u.id,name:u.name,user:u.user,role:u.role,google:true,picture:u.picture||data.picture||''};
+  DB.set('session',session);
+  if(window.google?.accounts?.id)try{google.accounts.id.disableAutoSelect()}catch(e){}
+  enterApp();
+}
+function googleHelp(){
+  openModal('Como ativar o login com Google',`
+    <div style="font-size:.88rem;line-height:1.65;color:var(--txt)">
+      <p style="margin-bottom:10px">O login com Google é gratuito. Você precisa criar um <b>Client ID</b> uma única vez:</p>
+      <ol style="margin:0 0 12px 18px;display:flex;flex-direction:column;gap:7px">
+        <li>Acesse <b>console.cloud.google.com</b> e crie um projeto (qualquer nome).</li>
+        <li>Vá em <b>APIs e serviços → Tela de consentimento OAuth</b>, escolha <b>Externo</b> e preencha o nome do app e seu e-mail.</li>
+        <li>Em <b>Credenciais → Criar credenciais → ID do cliente OAuth</b>, escolha <b>Aplicativo da Web</b>.</li>
+        <li>Em <b>Origens JavaScript autorizadas</b>, adicione o endereço onde o sistema fica hospedado (ex.: <code>https://meupdv.vercel.app</code>). Inclua exatamente o domínio, com https.</li>
+        <li>Copie o <b>Client ID</b> gerado e cole no campo aqui nas Configurações.</li>
+      </ol>
+      <p style="background:var(--warm-soft);color:#8A5A14;border-radius:8px;padding:10px;font-size:.82rem">Importante: o botão do Google só funciona em <b>site hospedado com HTTPS</b> cujo domínio esteja autorizado. Não funciona ao abrir o arquivo direto do celular nem dentro de webviews.</p>
+    </div>`,
+    `<button class="btn btn-primary" onclick="closeModal()">Entendi</button>`,true);
+}
+function openAccountMenu(){
+  const isAdmin=session.role==='admin';
+  openModal('Conta',`
+    <div style="display:flex;align-items:center;gap:13px;padding:6px 2px 16px;border-bottom:1px solid var(--line);margin-bottom:14px">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.3rem">${(session.name[0]||'?').toUpperCase()}</div>
+      <div><div style="font-weight:700;font-size:1.05rem">${esc(session.name)}</div><div style="font-size:.8rem;color:var(--txt-soft)">${session.role==='admin'?'Administrador':'Operador de caixa'}${session.google?' · via Google':''}</div></div>
+    </div>
+    <button class="btn btn-ghost btn-block" style="justify-content:flex-start;gap:10px;margin-bottom:8px" onclick="switchUser()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3 3-2-2"/></svg> Trocar de usuário</button>
+    ${isAdmin?`<button class="btn btn-ghost btn-block" style="justify-content:flex-start;gap:10px;margin-bottom:8px" onclick="closeModal();go('config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg> Gerenciar usuários</button>`:''}
+    <button class="btn btn-ghost btn-block" style="justify-content:flex-start;gap:10px" onclick="logout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg> Sair do sistema</button>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>`);
 }
 function enterApp(){
   $('loginScreen').style.display='none';$('app').classList.add('on');
   $('userName').textContent=session.name;
   $('userRole').textContent=session.role==='admin'?'Administrador':'Operador de caixa';
-  $('userAvatar').textContent=(session.name[0]||'?').toUpperCase();
+  if(session.picture){$('userAvatar').innerHTML='<img src="'+esc(session.picture)+'" referrerpolicy="no-referrer" alt="">'}
+  else{$('userAvatar').textContent=(session.name[0]||'?').toUpperCase()}
   document.querySelectorAll('[data-perm]').forEach(el=>{el.style.display=can(el.dataset.perm)?'':'none'});
   document.querySelectorAll('[data-perm-act]').forEach(el=>{el.style.display=can(el.dataset.permAct)?'':'none'});
   applyStoreName();updateCashPill();go('pdv');
@@ -2943,6 +3083,8 @@ function renderConfig(){
           <div class="field full"><label>Mensagem no rodapé do cupom</label><input class="inp" id="stFoot" value="${esc(st.footer)}"></div>
           <div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="stNoStock" ${st.allowNoStock?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Permitir venda com estoque zerado (apenas avisa)</label></div>
           <div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="stAutoPrint" ${st.autoPrint?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Imprimir cupom automaticamente ao finalizar a venda</label></div>
+          <div class="field full" style="border-top:1px solid var(--line);padding-top:14px;margin-top:4px"><label>Login com Google — ID do Cliente (Client ID)</label><input class="inp money" id="stGoogleId" value="${esc(st.googleClientId||'')}" placeholder="000000-xxxx.apps.googleusercontent.com" style="font-size:.82rem"><p style="font-size:.76rem;color:var(--txt-soft);margin-top:6px;line-height:1.5">Cole aqui o Client ID do Google Cloud para habilitar “Entrar com Google” na tela de login. <button type="button" class="lk" onclick="googleHelp()" style="background:none;border:none;color:var(--brand);cursor:pointer;text-decoration:underline;padding:0;font-size:.76rem">Como obter?</button></p></div>
+          <div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="stGoogleAuto" ${st.googleAutoCreate?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Permitir que novos e-mails Google criem operador automaticamente</label></div>
         </div>
         <button class="btn btn-primary" onclick="saveSettings()">Salvar dados da loja</button>
       </div>
@@ -2976,8 +3118,8 @@ function renderConfig(){
   </div>`;
 }
 function saveSettings(){
-  Object.assign(S.settings,{storeName:$('stNome').value.trim()||'PinhoPDV',doc:$('stDoc').value.trim(),phone:$('stFone').value.trim(),address:$('stEnd').value.trim(),footer:$('stFoot').value.trim(),allowNoStock:$('stNoStock').checked,autoPrint:$('stAutoPrint').checked,pixKey:$('stPixKey').value.trim(),pixCity:$('stPixCity').value.trim()});
-  save('settings');applyStoreName();toast('Dados da loja salvos');
+  Object.assign(S.settings,{storeName:$('stNome').value.trim()||'PinhoPDV',doc:$('stDoc').value.trim(),phone:$('stFone').value.trim(),address:$('stEnd').value.trim(),footer:$('stFoot').value.trim(),allowNoStock:$('stNoStock').checked,autoPrint:$('stAutoPrint').checked,pixKey:$('stPixKey').value.trim(),pixCity:$('stPixCity').value.trim(),googleClientId:$('stGoogleId').value.trim(),googleAutoCreate:$('stGoogleAuto').checked});
+  save('settings');applyStoreName();_gsiReady=false;toast('Dados da loja salvos');
 }
 function openUserModal(id){
   const u=id?S.users.find(x=>x.id===id):null;
@@ -3091,7 +3233,7 @@ function installApp(){
   await ensureAdmin();
   if(!DB.ok)toast('Aviso: armazenamento do navegador indisponível — os dados não serão salvos ao fechar. Hospede o arquivo (https) para persistência.','warn');
   if(session&&S.users.some(u=>u.id===session.id))enterApp();
-  else{session=null;$('loginScreen').style.display='flex'}
+  else{session=null;$('loginScreen').style.display='flex';initGoogleLogin()}
 })();
 </script>
 </body>
