@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset='UTF-8'>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0E5E45">
 <meta name="mobile-web-app-capable" content="yes">
@@ -201,6 +201,17 @@ tbody tr:hover{background:#FAFAF4}
 .ticket-head{padding:16px 20px;border-bottom:1.5px dashed var(--line);display:flex;justify-content:space-between;align-items:center}
 .ticket-head h3{font-size:.95rem;display:flex;align-items:center;gap:8px}
 .ticket-head .cnt{font-family:var(--mono);font-size:.72rem;background:var(--brand-soft);color:var(--brand);padding:2px 8px;border-radius:99px;font-weight:600}
+.order-tabs{display:flex;gap:6px;padding:10px 14px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #EFEEE6}
+.order-tabs::-webkit-scrollbar{display:none}
+.otab{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:10px 10px 0 0;border:1.5px solid var(--line);border-bottom:none;background:var(--bg);cursor:pointer;font-size:.8rem;font-weight:600;color:var(--txt-soft);white-space:nowrap;transition:all .12s;position:relative;top:1px}
+.otab:hover{background:var(--surface);color:var(--txt)}
+.otab.on{background:var(--surface);color:var(--brand);border-color:var(--brand);border-bottom:2px solid var(--surface)}
+.otab .dot{width:7px;height:7px;border-radius:50%;background:var(--brand-bright);flex-shrink:0}
+.otab .otot{font-family:var(--mono);font-size:.72rem;opacity:.75}
+.otab .ox{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;line-height:1;opacity:.5;margin-left:2px}
+.otab .ox:hover{opacity:1;background:var(--danger);color:#fff}
+.otab-new{flex:0 0 auto;width:34px;height:34px;border-radius:10px;border:1.5px dashed var(--line);background:transparent;color:var(--brand);cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.otab-new:hover{border-color:var(--brand);background:var(--brand-soft)}
 .ticket-cust{padding:10px 20px;border-bottom:1px solid #EFEEE6;display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--txt-soft)}
 .ticket-cust button{font-size:.8rem;font-weight:600;color:var(--brand);display:flex;align-items:center;gap:5px}
 .ticket-cust button:hover{text-decoration:underline}
@@ -504,6 +515,7 @@ tbody tr:hover{background:#FAFAF4}
   </div>
   <div class="pdv-right">
     <div class="ticket-head"><h3><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h12v20l-2-1.5L14 22l-2-1.5L10 22l-2-1.5L6 22z"/><path d="M9 7h6M9 11h6"/></svg>Cupom atual</h3><button class="cnt" id="holdsBadge" onclick="openHolds()" title="Vendas em espera" style="display:none;background:var(--warm-soft);color:#8A5A14;border-radius:99px;padding:3px 10px;font-weight:700;margin-right:6px">⏸ 0</button><span class="cnt" id="ticketCount">0 itens</span></div>
+    <div class="order-tabs" id="orderTabs" style="display:none"></div>
     <div class="ticket-cust">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.4 3.6-5 7-5s6.2 1.6 7 5"/></svg>
       <span id="ticketCustName" style="flex:1">Consumidor final</span>
@@ -1900,11 +1912,13 @@ const S={
   cashSessions:DB.get('cashSessions',[]),
   settings:DB.get('settings',{storeName:'PinhoPDV',doc:'',address:'',phone:'',footer:'Obrigado pela preferência! Volte sempre.',allowNoStock:true,theme:'verde',pixKey:'',pixCity:'',pixType:'email',autoPrint:false,commission:0,googleClientId:'',googleAutoCreate:false}),
   holds:DB.get('holds',[]),
+  holdSeq:DB.get('holdSeq',0),
   seq:DB.get('seq',{sale:0})
 };
 const save=k=>DB.set(k,S[k]);
 let session=DB.get('session',null);   // usuário logado
 let ticket={items:[],discType:'%',discValue:0,customerId:null};
+let activeHoldId=null; // id do pedido em espera carregado no caixa (null = pedido novo)
 let payState=null;
 let activeCat='__all';
 let currentScreen='pdv';
@@ -2257,7 +2271,7 @@ function enterApp(){
   else{$('userAvatar').textContent=(session.name[0]||'?').toUpperCase()}
   document.querySelectorAll('[data-perm]').forEach(el=>{el.style.display=can(el.dataset.perm)?'':'none'});
   document.querySelectorAll('[data-perm-act]').forEach(el=>{el.style.display=can(el.dataset.permAct)?'':'none'});
-  applyStoreName();updateCashPill();go('pdv');
+  applyStoreName();updateCashPill();refreshHoldsBadge();go('pdv');
 }
 function applyStoreName(){
   const n=S.settings.storeName||'PinhoPDV';
@@ -2423,6 +2437,7 @@ function ticketCalc(){
 function renderTicket(){
   const c=ticketCalc();
   const n=ticket.items.reduce((a,i)=>a+i.qty,0);
+  renderOrderTabs();
   $('ticketCount').textContent=n+(n===1?' item':' itens');
   $('ticketItems').innerHTML=ticket.items.length?ticket.items.map(i=>`
     <div class="ti">
@@ -2440,66 +2455,178 @@ function renderTicket(){
   const cust=S.customers.find(x=>x.id===ticket.customerId);
   $('ticketCustName').textContent=cust?cust.name:'Consumidor final';
   $('ticketCustBtn').textContent=cust?'trocar':'vincular cliente';
+  persistActive();
+}
+// mantém o pedido ativo salvo em S.holds (sobrevive a fechar o app)
+function persistActive(){
+  if(!activeHoldId)return;
+  if(!ticket.items.length){
+    // esvaziou o pedido ativo: remove da espera e zera o vínculo
+    S.holds=S.holds.filter(x=>x.id!==activeHoldId);activeHoldId=null;save('holds');refreshHoldsBadge();return;
+  }
+  const c=ticketCalc();
+  let hd=S.holds.find(x=>x.id===activeHoldId);
+  if(!hd){hd={id:activeHoldId,name:ticket.name||'Pedido',at:new Date().toISOString(),userName:session.name};S.holds.push(hd)}
+  Object.assign(hd,{items:JSON.parse(JSON.stringify(ticket.items)),discType:ticket.discType,discValue:ticket.discValue,customerId:ticket.customerId,total:c.total});
+  if(ticket.name)hd.name=ticket.name;
+  save('holds');
 }
 function rmDiscount(){ticket.discValue=0;renderTicket()}
 function cancelTicket(){
-  if(!ticket.items.length)return;
-  askConfirm('Cancelar venda','Todos os itens do cupom atual serão descartados.','Cancelar venda',()=>{
-    ticket={items:[],discType:'%',discValue:0,customerId:null};renderTicket();toast('Venda cancelada');
+  if(!ticket.items.length&&!activeHoldId)return;
+  const ativo=activeHoldId?S.holds.find(x=>x.id===activeHoldId):null;
+  const msg=activeHoldId?'Este pedido será descartado por completo (sai da espera também).':'Todos os itens do cupom atual serão descartados.';
+  askConfirm('Cancelar venda',msg,'Cancelar venda',()=>{
+    if(activeHoldId){S.holds=S.holds.filter(x=>x.id!==activeHoldId);save('holds')}
+    activeHoldId=null;
+    ticket={items:[],discType:'%',discValue:0,customerId:null};
+    renderTicket();refreshHoldsBadge();toast('Venda cancelada');
   });
 }
 /* ---------- VENDAS EM ESPERA (COMANDA) ---------- */
+// abas de pedidos: mostra o pedido atual + os em espera, permite alternar com 1 toque
+function renderOrderTabs(){
+  const el=$('orderTabs');if(!el)return;
+  const temAtual=ticket.items.length>0;
+  const cTotal=temAtual?ticketCalc().total:0;
+  // só mostra a barra se há mais de um pedido em jogo (atual + espera)
+  const totalPedidos=S.holds.length+(temAtual&&!activeHoldId?1:0);
+  if(totalPedidos===0||(S.holds.length===0&&!activeHoldId)){el.style.display='none';return}
+  el.style.display='flex';
+  let tabs='';
+  // 1) aba do pedido NOVO no caixa (sem nome ainda, não está na espera)
+  if(temAtual&&!activeHoldId){
+    tabs+=`<div class="otab on" title="Pedido atual (ainda não guardado)"><span class="dot"></span>Novo<span class="otot">${fmt(cTotal)}</span></div>`;
+  }
+  // 2) abas dos pedidos em espera (o ativo fica destacado)
+  S.holds.forEach(hd=>{
+    const ativo=hd.id===activeHoldId;
+    const un=hd.items.reduce((a,i)=>a+i.qty,0);
+    tabs+=`<div class="otab ${ativo?'on':''}" onclick="switchToOrder('${hd.id}')" title="${esc(hd.name)} · ${un} item(ns)">${ativo?'<span class="dot"></span>':''}${esc(hd.name.length>14?hd.name.slice(0,13)+'…':hd.name)}<span class="otot">${fmt(hd.total||0)}</span><span class="ox" onclick="event.stopPropagation();delHold('${hd.id}')" title="Descartar">×</span></div>`;
+  });
+  // 3) botão novo pedido
+  tabs+=`<button class="otab-new" onclick="newOrder()" title="Novo pedido">+</button>`;
+  el.innerHTML=tabs;
+  // rola até a aba ativa
+  const on=el.querySelector('.otab.on');if(on)on.scrollIntoView({inline:'nearest',block:'nearest'});
+}
+// alterna para um pedido pelo clique na aba (guarda o atual automaticamente)
+function switchToOrder(id){
+  if(id===activeHoldId)return; // já está nele
+  const hd=S.holds.find(x=>x.id===id);if(!hd)return;
+  stashCurrent();              // guarda o pedido atual sem perder
+  ticket={items:JSON.parse(JSON.stringify(hd.items)),discType:hd.discType,discValue:hd.discValue,customerId:hd.customerId,name:hd.name};
+  activeHoldId=id;
+  renderTicket();refreshHoldsBadge();
+  toast('Pedido "'+hd.name+'"');
+}
 function refreshHoldsBadge(){
   const b=$('holdsBadge');if(!b)return;
-  b.style.display=S.holds.length?'inline-block':'none';
-  b.textContent='⏸ '+S.holds.length;
+  const n=S.holds.length;
+  b.style.display=(n||activeHoldId)?'inline-block':'none';
+  // conta inclui o pedido ativo (que saiu da lista mas continua "aberto")
+  const total=n+(activeHoldId?1:0);
+  b.textContent='⏸ '+total+(total===1?' pedido':' pedidos');
+}
+// guarda o cupom atual de volta na espera (sem perguntar nome) — usado ao alternar
+function stashCurrent(){
+  if(!ticket.items.length)return; // nada a guardar
+  const c=ticketCalc();
+  const payload={items:JSON.parse(JSON.stringify(ticket.items)),discType:ticket.discType,discValue:ticket.discValue,customerId:ticket.customerId,total:c.total};
+  let hd=activeHoldId?S.holds.find(x=>x.id===activeHoldId):null;
+  if(hd){Object.assign(hd,payload);if(ticket.name)hd.name=ticket.name} // pedido aberto: atualiza preservando nome
+  else{
+    const num=(S.holdSeq=(S.holdSeq||0)+1);
+    S.holds.push({id:uid(),name:'Pedido '+num,at:new Date().toISOString(),userName:session.name,auto:true,...payload});
+    save('holdSeq');
+  }
+  save('holds');
 }
 function holdTicket(){
-  if(!ticket.items.length)return toast('O cupom está vazio','warn');
-  openModal('Colocar venda em espera',`
-    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:12px">A venda fica guardada (mesmo se fechar o app) e o caixa libera para o próximo cliente. O estoque só baixa quando a venda for finalizada.</p>
-    <div class="field"><label>Identificação *</label><input class="inp" id="holdName" placeholder="Ex.: Mesa 3, João, Balcão 2" onkeydown="if(event.key==='Enter')confirmHold()"></div>`,
-    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="confirmHold()">Guardar venda</button>`);
-  setTimeout(()=>$('holdName').focus(),60);
+  if(!ticket.items.length){
+    // cupom vazio: se há pedidos guardados, abre o painel para trocar
+    if(S.holds.length)return openHolds();
+    return toast('O cupom está vazio','warn');
+  }
+  const old=activeHoldId?S.holds.find(x=>x.id===activeHoldId):null;
+  openModal('Guardar pedido em espera',`
+    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:12px">O pedido fica guardado (mesmo se fechar o app) e o caixa libera para o próximo cliente. Você pode voltar e alternar entre pedidos quando quiser. O estoque só baixa ao finalizar a venda.</p>
+    <div class="field"><label>Nome do pedido *</label><input class="inp" id="holdName" value="${old?esc(old.name):''}" placeholder="Ex.: Mesa 3, João, Balcão 2" onkeydown="if(event.key==='Enter')confirmHold()"></div>`,
+    `<button class="btn btn-ghost" onclick="closeModal()">Voltar</button><button class="btn btn-primary" onclick="confirmHold()">Guardar pedido</button>`);
+  setTimeout(()=>{const el=$('holdName');el.focus();el.select&&el.select()},60);
 }
 function confirmHold(){
   const name=$('holdName').value.trim();
   if(!name)return toast('Dê um nome para identificar','warn');
   const c=ticketCalc();
-  S.holds.push({id:uid(),name,items:JSON.parse(JSON.stringify(ticket.items)),discType:ticket.discType,discValue:ticket.discValue,customerId:ticket.customerId,total:c.total,at:new Date().toISOString(),userName:session.name});
+  const payload={name,items:JSON.parse(JSON.stringify(ticket.items)),discType:ticket.discType,discValue:ticket.discValue,customerId:ticket.customerId,total:c.total};
+  let hd=activeHoldId?S.holds.find(x=>x.id===activeHoldId):null;
+  if(hd){Object.assign(hd,payload)} // já estava na lista (persistActive): renomeia e atualiza
+  else{S.holds.push({id:uid(),at:new Date().toISOString(),userName:session.name,...payload})}
   save('holds');
+  activeHoldId=null;
   ticket={items:[],discType:'%',discValue:0,customerId:null};
   closeModal();renderTicket();refreshHoldsBadge();
   toast('Venda "'+name+'" em espera');
 }
 function openHolds(){
-  if(!S.holds.length)return toast('Nenhuma venda em espera','warn');
-  openModal('Vendas em espera ('+S.holds.length+')',
-    S.holds.map(hd=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)">
+  // monta a lista: pedido ATIVO (no caixa) primeiro, depois os guardados
+  const cAtivo=ticket.items.length?ticketCalc():null;
+  const ativoNome=(()=>{if(!activeHoldId)return 'Pedido atual';const old=S.holds.find(x=>x.id===activeHoldId);return old?old.name:'Pedido atual'})();
+  let rows='';
+  if(ticket.items.length){
+    rows+=`<div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border:2px solid var(--brand);border-radius:12px;background:var(--brand-soft);margin-bottom:10px">
+      <div style="flex:1;min-width:0"><span class="chip chip-ok" style="font-size:.6rem">no caixa agora</span><br><b>${esc(ativoNome)}</b><br><span style="font-size:.76rem;color:var(--txt-soft)">${ticket.items.reduce((a,i)=>a+i.qty,0)} item(ns) · ${fmt(cAtivo.total)}</span></div>
+    </div>`;
+  }
+  const outros=S.holds.filter(hd=>hd.id!==activeHoldId);
+  if(outros.length){
+    rows+=`<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-soft);margin:4px 0 8px">Trocar para outro pedido</div>`;
+    rows+=outros.map(hd=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)">
       <div style="flex:1;min-width:0"><b>${esc(hd.name)}</b><br><span style="font-size:.76rem;color:var(--txt-soft)">${hd.items.reduce((a,i)=>a+i.qty,0)} item(ns) · ${timeStr(hd.at)} · ${esc(hd.userName)}</span></div>
       <span class="money" style="font-weight:700">${fmt(hd.total)}</span>
-      <button class="btn btn-money btn-sm" onclick="resumeHold('${hd.id}')">Recuperar</button>
+      <button class="btn btn-money btn-sm" onclick="resumeHold('${hd.id}')">Abrir</button>
       <button class="icon-btn del" title="Descartar" onclick="delHold('${hd.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-    </div>`).join(''),
-    `<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>`,true);
+    </div>`).join('');
+  }
+  if(!rows)rows='<p style="color:var(--txt-soft);font-size:.88rem;text-align:center;padding:14px 0">Nenhum pedido aberto ou em espera.<br>Adicione itens e toque em “Espera” para guardar.</p>';
+  openModal('Pedidos',
+    rows,
+    `<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>${ticket.items.length?'<button class="btn btn-primary" onclick="newOrder()">+ Novo pedido</button>':''}`,true);
+}
+// guarda o pedido atual e abre um cupom limpo (sem perder o atual)
+function newOrder(){
+  stashCurrent();
+  activeHoldId=null;
+  ticket={items:[],discType:'%',discValue:0,customerId:null};
+  closeModal();renderTicket();refreshHoldsBadge();go('pdv');
+  toast('Pedido guardado. Cupom novo pronto.');
 }
 function resumeHold(id){
+  if(id===activeHoldId){closeModal();go('pdv');return} // já está aberto
   const hd=S.holds.find(x=>x.id===id);if(!hd)return;
-  const carregar=()=>{
-    ticket={items:hd.items,discType:hd.discType,discValue:hd.discValue,customerId:hd.customerId};
-    S.holds=S.holds.filter(x=>x.id!==id);save('holds');
-    closeModal();renderTicket();refreshHoldsBadge();go('pdv');
-    toast('Venda "'+hd.name+'" recuperada');
-  };
-  if(ticket.items.length)askConfirm('Substituir cupom atual?','O cupom atual tem itens. Eles serão <b>descartados</b> para carregar a venda em espera. Se quiser mantê-los, coloque-os em espera primeiro.','Substituir',carregar);
-  else carregar();
+  // 1) guarda o pedido atual (cupom novo sem nome vira pedido; ativo já está salvo)
+  stashCurrent();
+  // 2) carrega o pedido escolhido e marca como ativo (preserva o nome)
+  ticket={items:JSON.parse(JSON.stringify(hd.items)),discType:hd.discType,discValue:hd.discValue,customerId:hd.customerId,name:hd.name};
+  activeHoldId=id;
+  closeModal();renderTicket();refreshHoldsBadge();go('pdv');
+  toast('Editando "'+hd.name+'"');
 }
 function delHold(id){
-  const hd=S.holds.find(x=>x.id===id);
-  askConfirm('Descartar venda em espera',`A venda <b>${esc(hd.name)}</b> (${fmt(hd.total)}) será descartada. Nenhum estoque é alterado.`,'Descartar',()=>{
-    S.holds=S.holds.filter(x=>x.id!==id);save('holds');refreshHoldsBadge();
-    if(S.holds.length)openHolds();else closeModal();
-    toast('Venda descartada');
+  const hd=S.holds.find(x=>x.id===id);if(!hd)return;
+  const modalAberto=$('modalBg')&&$('modalBg').classList.contains('on');
+  askConfirm('Descartar pedido',`O pedido <b>${esc(hd.name)}</b> (${fmt(hd.total)}) será descartado. Nenhum estoque é alterado.`,'Descartar',()=>{
+    const eraAtivo=id===activeHoldId;
+    S.holds=S.holds.filter(x=>x.id!==id);save('holds');
+    if(eraAtivo){ // descartou o pedido aberto no caixa: limpa o cupom
+      activeHoldId=null;
+      ticket={items:[],discType:'%',discValue:0,customerId:null};
+    }
+    renderTicket();refreshHoldsBadge();
+    // se o descarte foi pelo modal de pedidos, reabre; se foi pela aba, não
+    if(modalAberto){if(S.holds.length||ticket.items.length)openHolds();else closeModal()}
+    toast('Pedido "'+hd.name+'" descartado');
   });
 }
 function openDiscountModal(){
@@ -2637,8 +2764,10 @@ function finishSale(){
   sale.items.forEach(i=>{const p=S.products.find(x=>x.id===i.pid);if(p){p.stock-=i.qty}});
   save('products');
   const t=change>0?{c:change}:null;
+  if(activeHoldId){S.holds=S.holds.filter(x=>x.id!==activeHoldId);save('holds')}
+  activeHoldId=null;
   ticket={items:[],discType:'%',discValue:0,customerId:null};
-  renderTicket();updateCashPill();
+  renderTicket();updateCashPill();refreshHoldsBadge();
   if(S.settings.autoPrint)setTimeout(()=>printReceipt(sale.id),120);
   openModal('Venda concluída',`
     <div class="sale-done">
