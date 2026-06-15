@@ -1,4 +1,59 @@
 <!DOCTYPE html>
+<!--
+================================================================================
+  PinhoPDV — Sistema de Ponto de Venda (PDV)
+================================================================================
+
+  O QUE É
+  -------
+  Sistema de caixa para pequeno comércio: frente de caixa, controle de estoque,
+  clientes, vendas, relatórios e fechamento de caixa. Funciona no PC, celular e
+  tablet, e pode ser instalado como app (PWA).
+
+  COMO FUNCIONA (arquitetura)
+  ---------------------------
+  - É UM ÚNICO ARQUIVO (este index.html). Não precisa de servidor nem instalação:
+    basta abrir no navegador ou hospedar o arquivo em qualquer lugar (Vercel,
+    Netlify, Hostinger, etc.). HTTPS é necessário para câmera e instalação do app.
+  - SEM BACKEND. Todos os dados ficam salvos no próprio navegador, via localStorage
+    (ver a "CAMADA DE DADOS" no início do <script>). Cada aparelho tem seus dados.
+    Por isso existe o backup em JSON e a exportação por planilha (Configurações).
+  - VANILLA, sem frameworks. Só HTML + CSS + JavaScript puro. Nada de build, nada
+    de dependências para baixar. As únicas coisas externas são a fonte do Google
+    e (opcional) o login do Google, ambas carregadas em tempo de execução.
+
+  COMO O ARQUIVO É ORGANIZADO
+  ---------------------------
+  1. <head> ............ metadados, ícones, fonte e PWA
+  2. <style> ........... todo o visual, agrupado por área (LOGIN, PDV, MODAIS...)
+  3. <body> ............ a estrutura das telas (marcação HTML)
+  4. <script> .......... toda a lógica. Começa com a CAMADA DE DADOS e o ESTADO,
+                         seguidos pelas áreas do sistema (FRENTE DE CAIXA,
+                         PRODUTOS, CLIENTES, VENDAS, CAIXA, RELATÓRIOS...).
+                         Há um índice logo no começo do <script>.
+
+  CONCEITOS-CHAVE PARA QUEM FOR MEXER
+  -----------------------------------
+  - S ............. objeto global com TODO o estado do sistema (produtos, vendas,
+                    clientes, usuários, configurações...). É a "fonte da verdade".
+  - DB ............ camada que lê/grava o S no localStorage (prefixo "cv_").
+  - save('x') .... grava S.x no localStorage. Sempre chame após alterar S.x.
+  - ticket ....... a venda que está sendo montada agora na frente de caixa.
+  - $('id') ...... atalho para document.getElementById.
+  - esc(txt) ..... escapa texto do usuário antes de jogar no HTML (anti-XSS).
+                   SEMPRE use esc() ao inserir dados digitados pelo usuário.
+  - toast(msg) ... mostra uma mensagem rápida na tela.
+  - go('tela') ... troca de tela (pdv, produtos, clientes, vendas, caixa...).
+
+  SEGURANÇA
+  ---------
+  - Senhas são guardadas como hash SHA-256, nunca em texto puro.
+  - Todo dado digitado pelo usuário passa por esc() antes de virar HTML.
+  - Ações destrutivas pedem confirmação (askConfirm).
+
+  Login inicial padrão: usuário "admin", senha "admin123" (troque no primeiro uso).
+================================================================================
+-->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -627,7 +682,18 @@ tbody tr:hover{background:#FAFAF4}
 <div id="toasts"></div>
 
 <script>
-/* QRCode generator — (c) 2009 Kazuhiko Arase — MIT License. Empacotado para uso offline no PinhoPDV. */
+/* ============================================================
+   MOTOR DE QR CODE (biblioteca de terceiro, embutida)
+   ------------------------------------------------------------
+   Biblioteca "qrcode-generator" de Kazuhiko Arase (licença MIT).
+   Está copiada aqui dentro de propósito, para o sistema gerar o QR
+   do PIX SEM internet e sem depender de nenhum serviço externo.
+   Não precisa entender este bloco para mexer no resto do sistema —
+   ele só expõe window.QRGen, usado pela função qrSVG() lá embaixo.
+   Não edite este trecho; se precisar atualizar, troque pela versão
+   oficial da biblioteca.
+   (c) 2009 Kazuhiko Arase — MIT License.
+   ============================================================ */
 window.QRGen=(function(){
 var module,exports;
 var M={};
@@ -1892,7 +1958,38 @@ return M['index'];
 })();
 
 /* ============================================================
+   ÍNDICE DO JAVASCRIPT (use Ctrl+F com o nome em MAIÚSCULAS)
+   ------------------------------------------------------------
+   CAMADA DE DADOS ........ localStorage + objeto de estado S
+   UTILS .................. atalhos ($, esc, fmt, formatação, datas)
+   EXPORTAR VENDAS ........ planilha de vendas (CSV/Excel)
+   COR DO SISTEMA ......... temas de cor (trocar a aparência)
+   MODAL GENÉRICO ......... janelas/diálogos reutilizáveis
+   PERMISSÕES ............. o que admin x operador podem fazer
+   AUTENTICAÇÃO ........... login, logout, troca de usuário
+   LOGIN COM GOOGLE ....... entrar com conta Google (opcional)
+   NAVEGAÇÃO .............. troca de telas (go) e menu lateral
+   FRENTE DE CAIXA ........ a venda em andamento (ticket), busca,
+                            grade de produtos, carrinho, desconto,
+                            e VENDAS EM ESPERA (comandas/abas)
+   PAGAMENTO .............. cobrar, troco, PIX QR Code, finalizar
+   PRODUTOS ............... cadastro, estoque, etiquetas, scanner
+   CLIENTES ............... cadastro de clientes
+   VENDAS ................. histórico, recibo, estorno, devolução
+   CONTROLE DE CAIXA ...... abrir, sangria, suprimento, fechar
+   RELATÓRIOS ............. painéis, gráficos e indicadores
+   CONFIGURAÇÕES .......... dados da loja, usuários, backup
+   CENTRAL DE DADOS ....... importar/exportar tabelas em CSV
+   RELATÓRIOS P/ DOWNLOAD . PDF, Excel e cupom-resumo
+   ATALHOS + INÍCIO ....... teclas de atalho e a inicialização
+   ============================================================ */
+
+/* ============================================================
    CAMADA DE DADOS — localStorage com fallback em memória
+   ------------------------------------------------------------
+   DB guarda tudo no localStorage do navegador (chaves com prefixo
+   "cv_"). Se o localStorage estiver indisponível (ex.: aba privada
+   muito restritiva), cai para memória — os dados duram só a sessão.
    ============================================================ */
 const DB={
   mem:{},ok:false,
@@ -1940,7 +2037,18 @@ async function sha256(t){
   catch(e){ /* fallback p/ contextos sem WebCrypto (ex.: http sem TLS) */
     let h=5381;const s='cv·'+t;for(let i=0;i<s.length;i++){h=((h<<5)+h+s.charCodeAt(i))>>>0}return 'djb2:'+h.toString(16)}
 }
+/* ----- PIX (QR Code de cobrança no padrão do Banco Central) -----
+   O QR do PIX é só um texto ("BR Code") formatado num padrão fixo.
+   Esse texto termina com um código de verificação (CRC16) que o app
+   do banco confere ao ler. As 3 funções abaixo montam esse texto. */
+
+// CRC16-CCITT (polinômio 0x1021). É o dígito verificador exigido no
+// fim do BR Code. Confirmado com o vetor de teste oficial: "123456789" -> "29B1".
 function pixCRC(s){let c=0xFFFF;for(let i=0;i<s.length;i++){c^=s.charCodeAt(i)<<8;for(let j=0;j<8;j++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF}return c.toString(16).toUpperCase().padStart(4,'0')}
+
+// Formata a chave PIX conforme o tipo, no formato que o Bacen exige:
+// CPF/CNPJ = só dígitos; telefone = +55 e dígitos; e-mail = minúsculo;
+// aleatória = como veio. Retorna { ok, key (formatada), err (mensagem) }.
 function normalizePixKey(raw,type){
   raw=(raw||'').trim();
   if(type==='cpf'){const d=raw.replace(/\D/g,'');return{ok:d.length===11,key:d,err:d.length!==11?'O CPF deve ter 11 dígitos':''}}
@@ -1950,10 +2058,14 @@ function normalizePixKey(raw,type){
   if(type==='random'){const ok=/^[0-9a-fA-F-]{32,36}$/.test(raw);return{ok,key:raw.toLowerCase(),err:ok?'':'Chave aleatória inválida (use o código gerado pelo banco)'}}
   return{ok:!!raw,key:raw,err:''};
 }
+// Monta o texto completo do BR Code (o conteúdo do QR do PIX).
+// Cada campo é "ID + tamanho + valor" (função f). Inclui chave, nome
+// da loja, cidade e o valor; fecha com o CRC16. Retorna null se não
+// houver chave PIX cadastrada. "amount" é o valor da cobrança.
 function pixPayload(amount){
   const norm=normalizePixKey(S.settings.pixKey,S.settings.pixType||'email');
   const key=norm.key;if(!key)return null;
-  const f=(id,v)=>id+String(v.length).padStart(2,'0')+v;
+  const f=(id,v)=>id+String(v.length).padStart(2,'0')+v; // monta um campo do BR Code
   const name=(S.settings.storeName||'PINHOPDV').toUpperCase().replace(/[^ -~]/g,'').slice(0,25)||'LOJA';
   const city=(S.settings.pixCity||'CIDADE').toUpperCase().replace(/[^ -~]/g,'').slice(0,15)||'CIDADE';
   const mai=f('26',f('00','BR.GOV.BCB.PIX')+f('01',key));
@@ -1962,6 +2074,9 @@ function pixPayload(amount){
   p+=f('58','BR')+f('59',name)+f('60',city)+f('62',f('05','***'))+'6304';
   return p+pixCRC(p);
 }
+// Transforma qualquer texto num QR Code desenhado em SVG (cada módulo
+// vira um quadradinho). Usado para o PIX. "px" é o tamanho final em pixels.
+// Usa o motor QR embutido (window.QRGen, definido no topo do <script>).
 function qrSVG(text,px){
   try{
     const qr=new window.QRGen(0,0);qr.addData(text);qr.make();
@@ -1971,7 +2086,11 @@ function qrSVG(text,px){
     return r+'</svg>';
   }catch(e){return'<p style="color:var(--danger);font-size:.82rem">Não foi possível gerar o QR.</p>'}
 }
-/* Code128-B barcode em SVG (suficiente para etiquetas internas) */
+/* Gerador de código de barras Code128-B desenhado em SVG, usado nas
+   etiquetas de produto. O vetor P é a tabela de padrões de barras do
+   padrão Code128 (cada item são as barras/espaços de um caractere).
+   Não precisa entender a tabela; a função C128(texto, largura, altura)
+   devolve o SVG pronto do código de barras. */
 const C128=(()=>{const P=['11011001100','11001101100','11001100110','10010011000','10010001100','10001001100','10011001000','10011000100','10001100100','11001001000','11001000100','11000100100','10110011100','10011011100','10011001110','10111001100','10011101100','10011100110','11001110010','11001011100','11001001110','11011100100','11001110100','11101101110','11101001100','11100101100','11100100110','11101100100','11100110100','11100110010','11011011000','11011000110','11000110110','10100011000','10001011000','10001000110','10110001000','10001101000','10001100010','11010001000','11000101000','11000100010','10110111000','10110001110','10001101110','10111011000','10111000110','10001110110','11101110110','11010001110','11000101110','11011101000','11011100010','11011101110','11101011000','11101000110','11100010110','11101101000','11101100010','11100011010','11101111010','11001000010','11110001010','10100110000','10100001100','10010110000','10010000110','10000101100','10000100110','10110010000','10110000100','10011010000','10011000010','10000110100','10000110010','11000010010','11001010000','11110111010','11000010100','10001111010','10100111100','10010111100','10010011110','10111100100','10011110100','10011110010','11110100100','11110010100','11110010010','11011011110','11011110110','11110110110','10101111000','10100011110','10001011110','10111101000','10111100010','11110101000','11110100010','10111011110','10111101110','11101011110','11110101110','11010000100','11010010000','11010011100','11000111010'];
   return function(text,w,h){text=String(text);let sum=104,codes=[104];for(let i=0;i<text.length;i++){const v=text.charCodeAt(i)-32;codes.push(v);sum+=v*(i+1)}codes.push(sum%103);codes.push(106);
     let bits='';codes.forEach(c=>bits+=P[c]);const bw=w/bits.length;let x=0,rects='';
@@ -2110,7 +2229,11 @@ const PERMS={
 };
 const can=p=>!!(session&&PERMS[session.role]&&PERMS[session.role][p]);
 
-/* ---------- AUTENTICAÇÃO ---------- */
+/* ---------- AUTENTICAÇÃO ----------
+   Login por usuário/senha (senha guardada como hash SHA-256, nunca
+   em texto). ensureAdmin() cria o admin padrão no primeiro uso.
+   switchUser() volta ao login sem apagar dados (trocar de operador).
+   ---------------------------------- */
 async function ensureAdmin(){
   if(S.users.length===0){
     S.users.push({id:uid(),name:'Administrador',user:'admin',hash:await sha256('admin123'),role:'admin',mustChange:true});
@@ -2295,9 +2418,20 @@ function toggleSidebar(open){$('sidebar').classList.toggle('open',open);$('sbBac
 
 /* ============================================================
    FRENTE DE CAIXA
+   ------------------------------------------------------------
+   O coração do sistema. "ticket" é a venda sendo montada agora:
+   { items:[{pid,name,price,qty,...}], discType, discValue, customerId }.
+   O estoque NÃO baixa aqui — só na finalização (ver PAGAMENTO).
+
+   Preço de cada item é calculado dinamicamente por effPrice(): se a
+   quantidade atinge o atacado usa o preço de atacado; senão, se há
+   promoção válida usa a promoção; senão, o preço normal.
    ============================================================ */
 function openCash(){return S.cashSessions.find(c=>c.status==='open')}
-function effPrice(p,qty){ // preço efetivo: atacado > promoção > normal
+// Decide o preço de um produto conforme a quantidade no carrinho.
+// Prioridade: atacado (se atingiu a qtd mínima) > promoção > preço normal.
+// Retorna { v: preço a cobrar, tag: rótulo p/ mostrar no item ou null }.
+function effPrice(p,qty){
   if(p.wQty&&p.wPrice>0&&qty>=p.wQty)return{v:p.wPrice,tag:'atacado'};
   if(p.promo>0&&p.promo<p.price)return{v:p.promo,tag:'promo'};
   return{v:p.price,tag:null};
@@ -2483,8 +2617,21 @@ function cancelTicket(){
     renderTicket();refreshHoldsBadge();toast('Venda cancelada');
   });
 }
-/* ---------- VENDAS EM ESPERA (COMANDA) ---------- */
-// abas de pedidos: mostra o pedido atual + os em espera, permite alternar com 1 toque
+/* ---------- VENDAS EM ESPERA (COMANDAS / ABAS) ----------
+   Permite ter VÁRIOS pedidos abertos ao mesmo tempo (ex.: várias
+   mesas) e alternar entre eles sem perder nada.
+
+   Como funciona:
+   - S.holds[] guarda os pedidos em espera (cada um com seus itens).
+   - activeHoldId diz qual pedido da espera está carregado no caixa
+     agora (null = é um pedido novo, ainda não guardado).
+   - Ao trocar de pedido (switchToOrder / resumeHold), o pedido atual
+     é guardado automaticamente em S.holds por stashCurrent() ANTES de
+     carregar o outro. Por isso nada é apagado ao alternar.
+   - O estoque só baixa quando o pedido é finalizado (vira venda).
+   -------------------------------------------------------- */
+// Desenha as abas no topo do cupom: o pedido atual + cada pedido em
+// espera. A aba ativa fica destacada. Clicar numa aba chama switchToOrder.
 function renderOrderTabs(){
   const el=$('orderTabs');if(!el)return;
   const temAtual=ticket.items.length>0;
@@ -2661,6 +2808,11 @@ function pickCust(id){ticket.customerId=id;closeModal();renderTicket()}
 
 /* ============================================================
    PAGAMENTO E FINALIZAÇÃO
+   ------------------------------------------------------------
+   Recebe o pagamento (um ou vários meios), calcula o troco e finaliza.
+   É AQUI que a venda vira definitiva: o estoque dos produtos baixa, a
+   venda entra em S.sales e o pedido (se era uma comanda) sai da espera.
+   Antes disso, nada foi descontado do estoque.
    ============================================================ */
 const PAY_METHODS=[
   {id:'dinheiro',label:'Dinheiro',icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M5 9h.01M19 15h.01"/></svg>'},
@@ -2821,6 +2973,11 @@ function viewReceipt(saleId){
 
 /* ============================================================
    PRODUTOS
+   ------------------------------------------------------------
+   Cadastro de produtos: nome, código de barras, categoria, preço,
+   custo, estoque, promoção, atacado e validade. Inclui o leitor de
+   código de barras pela câmera (openScanner) e a impressão de
+   etiquetas (openLabels). seedDemo() cria produtos de exemplo.
    ============================================================ */
 function renderProducts(){
   const q=($('prodSearch').value||'').trim().toLowerCase();
@@ -2948,6 +3105,11 @@ function delCustomer(id){
 
 /* ============================================================
    VENDAS (histórico)
+   ------------------------------------------------------------
+   Lista as vendas já feitas, com filtros. Permite reimprimir o
+   recibo, estornar uma venda inteira (cancela e devolve o estoque)
+   ou fazer DEVOLUÇÃO PARCIAL de itens (só admin). Devoluções voltam
+   ao estoque, saem do caixa e entram no cálculo do total líquido.
    ============================================================ */
 function salesInRange(filter){
   const now=new Date();
@@ -3040,6 +3202,12 @@ function cancelSale(id){
 
 /* ============================================================
    CONTROLE DE CAIXA
+   ------------------------------------------------------------
+   Abertura (com fundo de troco), sangria (retirada), suprimento
+   (reforço) e fechamento com conferência. cashCalc() calcula quanto
+   DEVERIA ter na gaveta: fundo + dinheiro recebido - troco dado
+   + suprimentos - sangrias - devoluções. No fechamento, compara esse
+   valor com o que o operador contou de verdade e mostra a diferença.
    ============================================================ */
 function cashCalc(sess){
   const sales=S.sales.filter(s=>s.cashId===sess.id&&s.status==='ok');
@@ -3153,6 +3321,12 @@ function doCloseCash(){
 
 /* ============================================================
    RELATÓRIOS
+   ------------------------------------------------------------
+   Painéis com indicadores (vendas do dia, ticket médio, lucro),
+   gráfico de vendas por dia (rolável, 30 dias), formas de pagamento,
+   produtos mais vendidos, lucro/margem por produto e desempenho por
+   vendedor. Todos os totais são líquidos (já descontam devoluções).
+   Os relatórios para download (PDF/Excel/cupom) ficam mais abaixo.
    ============================================================ */
 function renderReports(){
   const ok=S.sales.filter(s=>s.status==='ok');
@@ -3246,6 +3420,10 @@ function renderReports(){
 
 /* ============================================================
    CONFIGURAÇÕES
+   ------------------------------------------------------------
+   Dados da loja (saem no cupom), chave PIX, login do Google, gestão
+   de usuários, backup completo em JSON (exportar/importar tudo) e o
+   acesso à Central de Dados (importar/exportar tabelas em CSV).
    ============================================================ */
 function renderConfig(){
   const st=S.settings;
@@ -3873,9 +4051,18 @@ function downloadCSV(text,filename){
 
 /* ============================================================
    CENTRAL DE DADOS — importar/exportar CSV de qualquer sistema
+   ------------------------------------------------------------
+   Exporta as tabelas (produtos, clientes, usuários) em CSV e importa
+   planilhas de OUTROS sistemas. Como cada sistema nomeia as colunas
+   de um jeito, na importação o usuário relaciona "qual coluna é o quê"
+   (e o app tenta adivinhar sozinho pelos nomes — ver guessColumn).
    ============================================================ */
+// Lê um texto CSV e devolve uma matriz de linhas/colunas.
+// Detecta sozinho o separador (vírgula, ponto-e-vírgula ou tab) e lida
+// com campos entre aspas, aspas escapadas ("") e quebras de linha dentro
+// do campo. Tolerante a aspas "soltas" no meio (ex.: nome Monitor 24").
 function parseCSVText(text){
-  text=text.replace(/^\uFEFF/,'');
+  text=text.replace(/^\uFEFF/,''); // remove o BOM que o Excel costuma colocar
   // detecta separador na 1ª linha (fora de aspas)
   const fl=text.split(/\r?\n/)[0]||'';
   const cnt={',':0,';':0,'\t':0};let q=false;
@@ -3899,7 +4086,9 @@ function parseCSVText(text){
   if(f!==''||row.length){row.push(f);rows.push(row)}
   return rows.filter(r=>r.some(c=>String(c).trim()!==''));
 }
-// converte texto numérico em vários formatos (1.234,56 ou 1,234.56 ou 27.90) para Number
+// Converte texto em número aceitando formatos brasileiro e americano:
+// "1.234,56" (BR), "1,234.56" (US), "27.90", "R$ 15,00" -> número. O truque
+// é olhar qual separador (vírgula ou ponto) aparece por último = o decimal.
 function parseNum(v){
   if(v==null)return 0;
   let s=String(v).trim().replace(/[R$\s]/gi,'');
@@ -3911,7 +4100,10 @@ function parseNum(v){
   }else if(s.includes(',')){s=s.replace(/\./g,'').replace(',','.')}
   const n=parseFloat(s);return isFinite(n)?n:0;
 }
-// schemas das tabelas: campos e sinônimos para auto-mapear
+// Define as tabelas que podem ser importadas e os campos de cada uma.
+// "syn" lista nomes alternativos de coluna (sinônimos) que o app usa
+// para adivinhar o mapeamento automático. Ex.: "preço", "valor", "venda"
+// todos viram o campo "price". "req" = obrigatório; "num" = é número.
 const DATA_SCHEMAS={
   products:{
     label:'Produtos', store:'products',
@@ -4129,6 +4321,11 @@ function resetAll(){
 
 /* ============================================================
    ATALHOS DE TECLADO + INICIALIZAÇÃO
+   ------------------------------------------------------------
+   Teclas de atalho da frente de caixa (F2 PDV, F4 desconto, F5
+   cobrar, F6 espera, F8 cancelar, ESC fecha) e a função init() que
+   roda quando a página abre: aplica o tema, garante o admin padrão
+   e mostra o login ou entra direto se já havia sessão.
    ============================================================ */
 document.addEventListener('keydown',e=>{
   if(!session)return;
