@@ -3470,29 +3470,12 @@ function renderConfig(){
         <p style="font-size:.76rem;color:var(--txt-soft);margin-top:10px">O backup .json salva e restaura <b>tudo de uma vez</b> (ideal pra trocar de aparelho).</p>
         <hr style="border:none;border-top:1px dashed var(--line);margin:18px 0">
         <h3 style="font-size:1rem;margin-bottom:6px">Importar / Exportar planilhas</h3>
-        <p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:14px">Migre produtos, clientes e usuários de outro sistema, ou baixe suas tabelas em CSV (Excel). Na importação você relaciona as colunas do arquivo.</p>
+        <p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:14px">Migre produtos, clientes e usuários de outro sistema (aceita Excel .xlsx e CSV), ou baixe suas tabelas. Na importação você relaciona as colunas do arquivo.</p>
         <button class="btn btn-primary" onclick="openDataCenter()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;margin-right:6px;vertical-align:-3px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Abrir central de dados</button>
         <hr style="border:none;border-top:1px dashed var(--line);margin:18px 0">
         <button class="btn btn-danger btn-sm" onclick="resetAll()">Apagar todos os dados</button>
       </div>
       <div class="card card-pad">
-        <h3 style="font-size:1rem;margin-bottom:6px">Importar e exportar tabelas (CSV)</h3>
-        <p style="font-size:.84rem;color:var(--txt-soft);margin-bottom:14px">Traga dados de outro sistema ou planilha, ou leve os seus para o Excel. A importação reconhece as colunas de qualquer arquivo CSV — você confirma o que é cada uma.</p>
-        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt-soft);margin-bottom:8px">Importar de um CSV</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
-          <button class="btn btn-money" onclick="openImportModal('products')">⬆ Importar produtos</button>
-          <button class="btn btn-money" onclick="openImportModal('customers')">⬆ Importar clientes</button>
-        </div>
-        <div style="font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt-soft);margin-bottom:8px">Exportar para CSV (abre no Excel)</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="exportTable('products')">⬇ Produtos</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportTable('sales')">⬇ Vendas</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportTable('customers')">⬇ Clientes</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportTable('users')">⬇ Usuários</button>
-        </div>
-      </div>
-    </div>
-    <div class="card card-pad">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h3 style="font-size:1rem">Usuários do sistema</h3><button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Novo</button></div>
       <div id="usersList">${S.users.map(u=>`
         <div class="pay-line"><span><b>${esc(u.name)}</b>${(u.needPass||!u.hash)?' <span class="chip chip-bad" style="font-size:.6rem">sem senha</span>':''}<br><span style="font-size:.74rem;color:var(--txt-soft)">@${esc(u.user)} · ${u.role==='admin'?'Administrador':'Operador'}</span></span>
@@ -3565,162 +3548,6 @@ function delUser(id){
   askConfirm('Excluir usuário',`<b>${esc(u.name)}</b> perderá o acesso ao sistema.`,'Excluir',()=>{
     S.users=S.users.filter(x=>x.id!==id);save('users');renderConfig();toast('Usuário excluído');
   });
-}
-/* ========================= IMPORTAR / EXPORTAR POR TABELA ========================= */
-// parser CSV robusto (aspas, ; ou , como separador, vírgula dentro de campo)
-function parseCSV(text){
-  text=text.replace(/^\uFEFF/,''); // remove BOM
-  const fl=text.slice(0,(text.indexOf('\n')+1||text.length));
-  const sep=(fl.split(';').length>fl.split(',').length)?';':',';
-  const rows=[];let row=[],field='',inQ=false;
-  for(let i=0;i<text.length;i++){
-    const c=text[i],nx=text[i+1];
-    if(inQ){
-      if(c==='"'&&nx==='"'){field+='"';i++}
-      else if(c==='"')inQ=false;
-      else field+=c;
-    }else{
-      if(c==='"')inQ=true;
-      else if(c===sep){row.push(field);field=''}
-      else if(c==='\r'){}
-      else if(c==='\n'){row.push(field);rows.push(row);row=[];field=''}
-      else field+=c;
-    }
-  }
-  if(field!==''||row.length){row.push(field);rows.push(row)}
-  return rows.filter(r=>r.some(c=>String(c).trim()!==''));
-}
-function _normH(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[_\-\s]/g,'')}
-function guessField(header,targetFields){
-  const h=_normH(header);
-  const syn={
-    minStock:['estoqueminimo','estoquemin','minimo','minstock','minimum','qtdminima','estminimo'],
-    cost:['custo','cost','precocusto','custounitario','valorcusto','precodecusto'],
-    code:['codigo','code','sku','barcode','codbarras','codigodebarras','ean','referencia','ref','cod'],
-    price:['preco','price','valor','valorunitario','precovenda','unitprice','precounitario','precodevenda'],
-    stock:['estoque','stock','quantidade','qtd','qty','saldo','quant','inventory'],
-    name:['nome','name','produto','descricao','description','item','title','titulo','razaosocial','cliente','nomedoproduto'],
-    cat:['categoria','category','cat','grupo','tipo','departamento','secao'],
-    phone:['telefone','phone','celular','fone','tel','whatsapp','contato','mobile'],
-    email:['email','mail','correio'],
-    doc:['cpf','cnpj','documento','doc','cpfcnpj','rg'],
-    obs:['observacao','obs','nota','notas','comentario','comment','notes'],
-  };
-  const pri=['minStock','cost','code','price','stock','name','cat','phone','email','doc','obs'];
-  const order=pri.filter(f=>targetFields.includes(f));
-  for(const f of order){if((syn[f]||[f]).some(s=>_normH(s)===h))return f}
-  for(const f of order){if((syn[f]||[f]).some(s=>{const n=_normH(s);return n.length>3&&(h.includes(n)||n.includes(h))}))return f}
-  return null;
-}
-// rótulos amigáveis de cada campo destino
-const FIELD_LABELS={name:'Nome',code:'Código',price:'Preço (venda)',cost:'Custo',stock:'Estoque',minStock:'Estoque mínimo',cat:'Categoria',phone:'Telefone',email:'E-mail',doc:'CPF/CNPJ',obs:'Observação'};
-const IMPORT_TARGETS={
-  products:{label:'Produtos',fields:['name','code','price','cost','stock','minStock','cat'],required:['name'],dedup:'code'},
-  customers:{label:'Clientes',fields:['name','phone','email','doc','obs'],required:['name'],dedup:'phone'},
-};
-let _importState=null;
-function openImportModal(target){
-  const cfg=IMPORT_TARGETS[target];
-  openModal('Importar '+cfg.label,`
-    <p style="font-size:.86rem;color:var(--txt-soft);margin-bottom:14px">Selecione um arquivo <b>CSV</b> exportado de qualquer sistema ou planilha (Excel, Google Sheets, outro PDV). Na próxima etapa você confirma qual coluna é o quê.</p>
-    <div style="border:2px dashed var(--line);border-radius:12px;padding:26px;text-align:center;cursor:pointer" onclick="$('importCsvFile').click()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:38px;height:38px;margin-bottom:8px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-      <div style="font-weight:600">Toque para escolher o arquivo CSV</div>
-      <div style="font-size:.76rem;color:var(--txt-soft);margin-top:4px">aceita separador vírgula ou ponto-e-vírgula</div>
-    </div>
-    <input type="file" id="importCsvFile" accept=".csv,text/csv" style="display:none" onchange="onImportFile(this,'${target}')">
-    <p style="font-size:.76rem;color:var(--txt-soft);margin-top:12px">Dica: no Excel/Google Sheets use <b>Arquivo → Baixar → CSV</b>.</p>`,
-    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>`,true);
-}
-function onImportFile(input,target){
-  const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const rows=parseCSV(e.target.result);
-      if(rows.length<2){toast('O arquivo precisa ter cabeçalho e ao menos uma linha','warn');return}
-      const headers=rows[0], body=rows.slice(1);
-      const cfg=IMPORT_TARGETS[target];
-      // auto-mapeia
-      const mapping=headers.map(h=>guessField(h,cfg.fields));
-      _importState={target,headers,body,mapping};
-      renderMappingStep();
-    }catch(err){toast('Não foi possível ler o arquivo','err')}
-  };
-  reader.onerror=()=>toast('Erro ao ler o arquivo','err');
-  reader.readAsText(file,'UTF-8');
-}
-function renderMappingStep(){
-  const {target,headers,body,mapping}=_importState;
-  const cfg=IMPORT_TARGETS[target];
-  const opts=field=>`<option value="">— ignorar —</option>`+cfg.fields.map(f=>`<option value="${f}" ${field===f?'selected':''}>${FIELD_LABELS[f]}${cfg.required.includes(f)?' *':''}</option>`).join('');
-  const preview=body.slice(0,3);
-  openModal('Confirmar colunas — '+cfg.label,`
-    <p style="font-size:.85rem;color:var(--txt-soft);margin-bottom:6px">Encontramos <b>${body.length}</b> linha(s). Confirme para qual campo vai cada coluna. Já tentamos adivinhar.</p>
-    <div style="max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:10px">
-    <table style="width:100%;border-collapse:collapse;font-size:.8rem">
-      <thead><tr style="position:sticky;top:0;background:var(--bg)"><th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Coluna do arquivo</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Vai para o campo</th></tr></thead>
-      <tbody>
-      ${headers.map((h,i)=>`<tr>
-        <td style="padding:8px;border-bottom:1px solid var(--line)"><b>${esc(h||'(sem nome)')}</b><br><span style="color:var(--txt-soft);font-size:.72rem">ex.: ${esc((preview.map(r=>r[i]).find(v=>v&&v.trim())||'—').slice(0,22))}</span></td>
-        <td style="padding:8px;border-bottom:1px solid var(--line)"><select class="inp" id="map_${i}" style="padding:7px;font-size:.82rem">${opts(mapping[i])}</select></td>
-      </tr>`).join('')}
-      </tbody>
-    </table>
-    </div>
-    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.84rem"><input type="checkbox" id="impUpdate" checked style="width:16px;height:16px;accent-color:var(--brand)"> Atualizar itens já existentes (pelo ${cfg.dedup==='code'?'código':'telefone'}) em vez de duplicar</label>
-    <p style="font-size:.74rem;color:var(--txt-soft);margin-top:8px">Campos com * são obrigatórios. Linhas sem esses campos serão ignoradas.</p>`,
-    `<button class="btn btn-ghost" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="runImport()">Importar ${body.length} linha(s)</button>`,true);
-}
-function runImport(){
-  const {target,headers,body}=_importState;
-  const cfg=IMPORT_TARGETS[target];
-  // lê o mapeamento escolhido
-  const mapping=headers.map((h,i)=>$('map_'+i).value||null);
-  if(!cfg.required.every(r=>mapping.includes(r))){
-    toast('Defina a coluna obrigatória: '+cfg.required.map(r=>FIELD_LABELS[r]).join(', '),'warn');return;
-  }
-  const update=$('impUpdate').checked;
-  let criados=0,atualizados=0,ignorados=0;
-  body.forEach(row=>{
-    const obj={};
-    mapping.forEach((field,i)=>{if(field)obj[field]=(row[i]||'').trim()});
-    if(!cfg.required.every(r=>obj[r])){ignorados++;return}
-    if(target==='products'){
-      const rec={
-        name:obj.name,
-        code:obj.code||'',
-        price:_parseNum(obj.price),
-        cost:_parseNum(obj.cost),
-        stock:parseInt(_parseNum(obj.stock))||0,
-        minStock:parseInt(_parseNum(obj.minStock))||0,
-        cat:obj.cat||'Geral',
-      };
-      let exist=update&&rec.code?S.products.find(p=>String(p.code)===String(rec.code)&&rec.code):null;
-      if(exist){Object.assign(exist,rec);atualizados++}
-      else{S.products.push({id:uid(),...rec,promo:0,wQty:0,wPrice:0,expiry:'',active:true});criados++}
-    }else if(target==='customers'){
-      const rec={name:obj.name,phone:obj.phone||'',email:obj.email||'',doc:obj.doc||'',obs:obj.obs||''};
-      let exist=update&&rec.phone?S.customers.find(c=>c.phone&&c.phone===rec.phone):null;
-      if(exist){Object.assign(exist,rec);atualizados++}
-      else{S.customers.push({id:uid(),...rec,createdAt:new Date().toISOString()});criados++}
-    }
-  });
-  save(target);
-  closeModal();
-  _importState=null;
-  if(target==='products')renderProducts();else renderCustomers();
-  toast(`Importação concluída: ${criados} novo(s), ${atualizados} atualizado(s)${ignorados?', '+ignorados+' ignorado(s)':''}`);
-}
-function _parseNum(v){
-  if(v==null||v==='')return 0;
-  v=String(v).replace(/[R$\s]/g,'');
-  // trata "1.234,56" (BR) e "1,234.56" (US)
-  if(v.includes(',')&&v.includes('.')){
-    if(v.lastIndexOf(',')>v.lastIndexOf('.'))v=v.replace(/\./g,'').replace(',','.'); // BR
-    else v=v.replace(/,/g,''); // US
-  }else if(v.includes(',')){v=v.replace(',','.')}
-  return parseFloat(v)||0;
 }
 // ---- EXPORTAR cada tabela ----
 function exportTable(target){
@@ -4057,6 +3884,92 @@ function downloadCSV(text,filename){
    de um jeito, na importação o usuário relaciona "qual coluna é o quê"
    (e o app tenta adivinhar sozinho pelos nomes — ver guessColumn).
    ============================================================ */
+// --- LEITOR DE ARQUIVOS .xlsx (Excel) ---
+// Um .xlsx é um ZIP com vários XMLs dentro. Estas funções abrem o ZIP e
+// leem a primeira planilha, devolvendo a MESMA matriz de linhas/colunas
+// que o parseCSVText — então o resto da importação funciona igual.
+// Usa só APIs nativas do navegador (DecompressionStream + DOMParser),
+// sem nenhuma biblioteca externa.
+
+// Descompacta um ZIP (o .xlsx) em { nomeDoArquivo: bytes }.
+async function unzipBuffer(buffer){
+  const dv=new DataView(buffer), bytes=new Uint8Array(buffer);
+  // acha o "fim do diretório central" (assinatura 0x06054b50), do fim pro começo
+  let eocd=-1;
+  for(let i=bytes.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){eocd=i;break} }
+  if(eocd<0)throw new Error('Arquivo .xlsx inválido');
+  const cdOffset=dv.getUint32(eocd+16,true), cdCount=dv.getUint16(eocd+10,true);
+  const entries=[];let p=cdOffset;
+  for(let i=0;i<cdCount;i++){
+    if(dv.getUint32(p,true)!==0x02014b50)break;
+    const method=dv.getUint16(p+10,true), compSize=dv.getUint32(p+20,true);
+    const nameLen=dv.getUint16(p+28,true), extraLen=dv.getUint16(p+30,true), commentLen=dv.getUint16(p+32,true);
+    const localOffset=dv.getUint32(p+42,true);
+    const name=new TextDecoder().decode(bytes.subarray(p+46,p+46+nameLen));
+    entries.push({name,method,compSize,localOffset});
+    p+=46+nameLen+extraLen+commentLen;
+  }
+  const files={};
+  for(const e of entries){
+    const lp=e.localOffset;
+    if(dv.getUint32(lp,true)!==0x04034b50)continue;
+    const nameLen=dv.getUint16(lp+26,true), extraLen=dv.getUint16(lp+28,true);
+    const dataStart=lp+30+nameLen+extraLen;
+    const comp=bytes.subarray(dataStart,dataStart+e.compSize);
+    if(e.method===0){ files[e.name]=comp.slice() } // sem compressão
+    else if(e.method===8){ // deflate
+      const ds=new DecompressionStream('deflate-raw');
+      const stream=new Response(comp).body.pipeThrough(ds);
+      files[e.name]=new Uint8Array(await new Response(stream).arrayBuffer());
+    }
+  }
+  return files;
+}
+// converte referência de célula ("B3") no índice da coluna (B -> 1)
+function xlsxColIndex(ref){
+  const m=ref.match(/^([A-Z]+)/);if(!m)return 0;
+  let n=0;for(const ch of m[1])n=n*26+(ch.charCodeAt(0)-64);
+  return n-1;
+}
+// limpa imprecisão de float do Excel (ex.: 89.90000000000001 -> "89.9")
+function xlsxCleanNum(s){
+  if(!/^-?\d+\.\d{6,}\d*$/.test(s))return s; // só mexe em decimais muito longos
+  const n=parseFloat(s);return isFinite(n)?String(Math.round(n*1e6)/1e6):s;
+}
+// Lê o .xlsx (ArrayBuffer) e devolve a matriz de linhas/colunas da 1ª planilha.
+async function readXLSXBuffer(buffer){
+  const files=await unzipBuffer(buffer);
+  const dec=new TextDecoder(), parser=new DOMParser();
+  // os textos ficam num pool separado (sharedStrings)
+  let shared=[];
+  if(files['xl/sharedStrings.xml']){
+    const doc=parser.parseFromString(dec.decode(files['xl/sharedStrings.xml']),'application/xml');
+    shared=[...doc.getElementsByTagName('si')].map(si=>[...si.getElementsByTagName('t')].map(t=>t.textContent).join(''));
+  }
+  // pega a primeira planilha (sheet1 quase sempre; senão, a primeira que existir)
+  let sheetPath='xl/worksheets/sheet1.xml';
+  if(!files[sheetPath]){ const any=Object.keys(files).find(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n)); if(any)sheetPath=any }
+  if(!files[sheetPath])throw new Error('Planilha não encontrada no arquivo');
+  const doc=parser.parseFromString(dec.decode(files[sheetPath]),'application/xml');
+  const rows=[];
+  for(const row of doc.getElementsByTagName('row')){
+    const cells=[];
+    for(const c of row.getElementsByTagName('c')){
+      const idx=xlsxColIndex(c.getAttribute('r')||'');
+      const type=c.getAttribute('t');
+      let val='';
+      const vEl=c.getElementsByTagName('v')[0], isEl=c.getElementsByTagName('is')[0];
+      if(type==='s'&&vEl)val=shared[parseInt(vEl.textContent)]||'';        // texto do pool
+      else if(type==='inlineStr'&&isEl)val=isEl.textContent||'';            // texto embutido
+      else if(vEl)val=xlsxCleanNum(vEl.textContent||'');                    // número/valor direto
+      cells[idx]=val;
+    }
+    for(let i=0;i<cells.length;i++)if(cells[i]===undefined)cells[i]='';
+    rows.push(cells);
+  }
+  return rows.filter(r=>r.some(c=>String(c).trim()!==''));
+}
+
 // Lê um texto CSV e devolve uma matriz de linhas/colunas.
 // Detecta sozinho o separador (vírgula, ponto-e-vírgula ou tab) e lida
 // com campos entre aspas, aspas escapadas ("") e quebras de linha dentro
@@ -4146,50 +4059,44 @@ function openDataCenter(){
       <button class="btn btn-ghost btn-sm" onclick="exportSalesXLS()">🧾 Vendas</button>
       ${can('config')?`<button class="btn btn-ghost btn-sm" onclick="exportTable('users')">🔑 Usuários</button>`:''}
     </div>
-    <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-soft);margin-bottom:9px">Importar de planilha (.csv)</label>
+    <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt-soft);margin-bottom:9px">Importar de planilha (Excel .xlsx ou .csv)</label>
     <p style="font-size:.78rem;color:var(--txt-soft);margin-bottom:10px">Escolha a tabela e depois o arquivo:</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-money btn-sm" onclick="pickImport('products')">📦 Importar produtos</button>
       <button class="btn btn-money btn-sm" onclick="pickImport('customers')">👥 Importar clientes</button>
       ${can('config')?`<button class="btn btn-money btn-sm" onclick="pickImport('users')">🔑 Importar usuários</button>`:''}
     </div>
-    <input type="file" id="csvImportFile" accept=".csv,.txt,text/csv" style="display:none">
-    <p style="font-size:.74rem;color:var(--txt-soft);margin-top:16px;line-height:1.5">💡 Dica: vendas são exportadas completas, mas a importação cuida de produtos, clientes e usuários — que é o que normalmente se migra de outro sistema.</p>`,
+    <input type="file" id="csvImportFile" accept=".csv,.txt,.xlsx,text/csv" style="display:none">
+    <p style="font-size:.74rem;color:var(--txt-soft);margin-top:16px;line-height:1.5">💡 Aceita planilhas do Excel (.xlsx) e arquivos .csv. As vendas são exportadas completas; a importação cuida de produtos, clientes e usuários — que é o que normalmente se migra de outro sistema.</p>`,
     `<button class="btn btn-ghost" onclick="closeModal()">Fechar</button>`,true);
-}
-function exportTable(which){
-  const sc=DATA_SCHEMAS[which];
-  const rows=[sc.fields.map(f=>f.label)];
-  S[sc.store].forEach(rec=>{
-    rows.push(sc.fields.map(f=>{
-      let v=rec[f.key];
-      if(f.num)return v==null?'':fmtN(v);
-      return v==null?'':String(v);
-    }));
-  });
-  const sep=';',nl='\r\n';
-  const csv=rows.map(r=>r.map(c=>{c=String(c==null?'':c);return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(sep)).join(nl);
-  downloadCSV(csv,sc.label.toLowerCase()+'-pinhopdv-'+new Date().toISOString().slice(0,10));
-  toast(sc.label+' exportados');
 }
 let _importTarget=null,_importRows=null;
 function pickImport(which){
   _importTarget=which;
   let inp=$('csvImportFile');
-  if(!inp){inp=document.createElement('input');inp.type='file';inp.id='csvImportFile';inp.accept='.csv,.txt,text/csv';inp.style.display='none';document.body.appendChild(inp)}
-  inp.onchange=()=>{
+  if(!inp){inp=document.createElement('input');inp.type='file';inp.id='csvImportFile';inp.style.display='none';document.body.appendChild(inp)}
+  inp.accept='.csv,.txt,.xlsx,text/csv'; // aceita planilha do Excel (.xlsx) e CSV
+  inp.onchange=async()=>{
     const f=inp.files[0];if(!f){return}
-    const r=new FileReader();
-    r.onload=()=>{
-      try{
-        const rows=parseCSVText(r.result);
-        if(rows.length<2){toast('O arquivo precisa ter cabeçalho e ao menos uma linha','warn');return}
-        _importRows=rows;
-        openImportMapper(which,rows);
-      }catch(e){toast('Não consegui ler o arquivo CSV','err')}
-      inp.value='';
-    };
-    r.readAsText(f,'UTF-8');
+    const ehXlsx=/\.xlsx$/i.test(f.name);
+    try{
+      let rows;
+      if(ehXlsx){
+        // .xlsx: lê como binário e usa o leitor de Excel
+        const buffer=await f.arrayBuffer();
+        rows=await readXLSXBuffer(buffer);
+      }else{
+        // .csv/.txt: lê como texto e usa o parser de CSV
+        const text=await f.text();
+        rows=parseCSVText(text);
+      }
+      if(!rows||rows.length<2){toast('O arquivo precisa ter cabeçalho e ao menos uma linha','warn');inp.value='';return}
+      _importRows=rows;
+      openImportMapper(which,rows);
+    }catch(e){
+      toast(ehXlsx?'Não consegui ler o arquivo Excel. Verifique se é um .xlsx válido.':'Não consegui ler o arquivo CSV','err');
+    }
+    inp.value='';
   };
   inp.click();
 }
