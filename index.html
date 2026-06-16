@@ -19,8 +19,8 @@
     (ver a "CAMADA DE DADOS" no início do <script>). Cada aparelho tem seus dados.
     Por isso existe o backup em JSON e a exportação por planilha (Configurações).
   - VANILLA, sem frameworks. Só HTML + CSS + JavaScript puro. Nada de build, nada
-    de dependências para baixar. As únicas coisas externas são a fonte do Google
-    e (opcional) o login do Google, ambas carregadas em tempo de execução.
+    de dependências para baixar. A única coisa externa é a fonte do Google,
+    carregada em tempo de execução.
 
   COMO O ARQUIVO É ORGANIZADO
   ---------------------------
@@ -505,10 +505,6 @@ tbody tr:hover{background:#FAFAF4}
       <div class="field"><label>Usuário</label><input class="inp" id="loginUser" autocomplete="username" placeholder="seu usuário"></div>
       <div class="field"><label>Senha</label><input class="inp" id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-money btn-block" onclick="doLogin()">Entrar no caixa</button>
-      <div id="googleArea" style="display:none">
-        <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--txt-soft);font-size:.78rem"><div style="flex:1;height:1px;background:var(--line)"></div>ou<div style="flex:1;height:1px;background:var(--line)"></div></div>
-        <div id="gBtnWrap" style="display:flex;justify-content:center;min-height:44px"></div>
-      </div>
       <div class="login-hint" id="loginHint">Primeiro acesso: usuário <code>admin</code> · senha <code>admin123</code><br>Troque a senha em Configurações → Usuários.</div>
     </div>
   </div>
@@ -1967,7 +1963,6 @@ return M['index'];
    MODAL GENÉRICO ......... janelas/diálogos reutilizáveis
    PERMISSÕES ............. o que admin x operador podem fazer
    AUTENTICAÇÃO ........... login, logout, troca de usuário
-   LOGIN COM GOOGLE ....... entrar com conta Google (opcional)
    NAVEGAÇÃO .............. troca de telas (go) e menu lateral
    FRENTE DE CAIXA ........ a venda em andamento (ticket), busca,
                             grade de produtos, carrinho, desconto,
@@ -2007,7 +2002,7 @@ const S={
   customers:DB.get('customers',[]),
   sales:DB.get('sales',[]),
   cashSessions:DB.get('cashSessions',[]),
-  settings:DB.get('settings',{storeName:'PinhoPDV',doc:'',address:'',phone:'',footer:'Obrigado pela preferência! Volte sempre.',allowNoStock:true,theme:'verde',pixKey:'',pixCity:'',pixType:'email',autoPrint:false,commission:0,googleClientId:'',googleAutoCreate:false}),
+  settings:DB.get('settings',{storeName:'PinhoPDV',doc:'',address:'',phone:'',footer:'Obrigado pela preferência! Volte sempre.',allowNoStock:true,theme:'verde',pixKey:'',pixCity:'',pixType:'email',autoPrint:false,commission:0}),
   holds:DB.get('holds',[]),
   holdSeq:DB.get('holdSeq',0),
   seq:DB.get('seq',{sale:0})
@@ -2282,11 +2277,9 @@ async function doLogin(){
   if(found.mustChange)toast('Por segurança, troque a senha padrão em Configurações','warn');
 }
 function logout(){
-  if(window.google?.accounts?.id)try{google.accounts.id.disableAutoSelect()}catch(e){}
   session=null;DB.del('session');
   $('app').classList.remove('on');$('loginScreen').style.display='flex';
   $('loginUser').value='';$('loginPass').value='';
-  initGoogleLogin();
 }
 function switchUser(){
   // volta à tela de login mantendo os dados; ideal para trocar de operador no balcão
@@ -2295,119 +2288,14 @@ function switchUser(){
   $('app').classList.remove('on');$('loginScreen').style.display='flex';
   $('loginUser').value='';$('loginPass').value='';
   setTimeout(()=>$('loginUser')?.focus(),80);
-  initGoogleLogin();
   toast('Faça login com outro usuário');
-}
-/* ===================== LOGIN COM GOOGLE ===================== */
-let _gsiLoaded=false,_gsiReady=false;
-function decodeJWT(token){
-  try{
-    const p=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    const json=decodeURIComponent(atob(p).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    return JSON.parse(json);
-  }catch(e){return null}
-}
-function loadGoogleScript(){
-  return new Promise((resolve,reject)=>{
-    if(window.google&&window.google.accounts&&window.google.accounts.id)return resolve();
-    if(_gsiLoaded){const t=setInterval(()=>{if(window.google?.accounts?.id){clearInterval(t);resolve()}},120);setTimeout(()=>{clearInterval(t);reject()},8000);return}
-    _gsiLoaded=true;
-    const s=document.createElement('script');
-    s.src='https://accounts.google.com/gsi/client';s.async=true;s.defer=true;
-    s.onload=()=>resolve();s.onerror=()=>reject();
-    document.head.appendChild(s);
-  });
-}
-async function initGoogleLogin(){
-  const cid=(S.settings.googleClientId||'').trim();
-  const area=$('googleArea');if(!area)return;
-  if(!cid){area.style.display='none';return}
-  area.style.display='block';
-  try{
-    await loadGoogleScript();
-    google.accounts.id.initialize({client_id:cid,callback:onGoogleCredential,auto_select:false,cancel_on_tap_outside:true});
-    const wrap=$('gBtnWrap');wrap.innerHTML='';
-    google.accounts.id.renderButton(wrap,{theme:'outline',size:'large',text:'signin_with',shape:'rectangular',logo_alignment:'center',width:280,locale:'pt-BR'});
-    _gsiReady=true;
-  }catch(e){
-    $('gBtnWrap').innerHTML='<p style="font-size:.78rem;color:var(--danger);text-align:center">Não foi possível carregar o login do Google. Verifique a conexão ou o Client ID.</p>';
-  }
-}
-async function onGoogleCredential(resp){
-  const data=decodeJWT(resp.credential);
-  if(!data||!data.email){return toast('Não foi possível ler a conta Google','err')}
-  if(data.email_verified===false){return toast('Este e-mail Google não está verificado','err')}
-  const email=data.email.toLowerCase(),sub=data.sub;
-  // 1) já existe usuário vinculado a este Google (por sub ou e-mail)?
-  let u=S.users.find(x=>x.googleSub===sub)||S.users.find(x=>(x.googleEmail||'').toLowerCase()===email)||S.users.find(x=>(x.email||'').toLowerCase()===email);
-  if(u){
-    if(!u.googleSub){u.googleSub=sub;u.googleEmail=email;save('users')}
-    finishGoogleLogin(u,data);return;
-  }
-  // 2) não vinculado: criar operador (se permitido) ou pedir vínculo a um admin
-  if(S.settings.googleAutoCreate){
-    u={id:uid(),name:data.name||email.split('@')[0],user:email,role:'operador',googleSub:sub,googleEmail:email,picture:data.picture||''};
-    S.users.push(u);save('users');
-    finishGoogleLogin(u,data);
-    toast('Conta Google cadastrada como operador');
-    return;
-  }
-  // pede credencial de um admin para autorizar o vínculo
-  pendingGoogle={sub,email,name:data.name||email.split('@')[0],picture:data.picture||'',data};
-  openModal('Vincular conta Google',`
-    <div style="display:flex;align-items:center;gap:12px;background:var(--brand-soft);border-radius:10px;padding:12px;margin-bottom:14px">
-      ${data.picture?`<img src="${esc(data.picture)}" style="width:42px;height:42px;border-radius:50%" referrerpolicy="no-referrer">`:''}
-      <div style="min-width:0"><b>${esc(data.name||'')}</b><br><span style="font-size:.8rem;color:var(--txt-soft);word-break:break-all">${esc(email)}</span></div>
-    </div>
-    <p style="font-size:.85rem;color:var(--txt-soft);margin-bottom:12px">Esta conta Google ainda não está vinculada. Um administrador precisa autorizar, escolhendo a qual usuário do sistema ela pertence.</p>
-    <div class="field"><label>Usuário do sistema</label><select class="inp" id="gLinkUser">${S.users.map(x=>`<option value="${x.id}">${esc(x.name)} (${esc(x.user)}${x.role==='admin'?' · admin':''})</option>`).join('')}</select></div>
-    <div class="field"><label>Senha do administrador (para confirmar)</label><input class="inp" id="gAdminPass" type="password" placeholder="senha de um administrador" onkeydown="if(event.key==='Enter')confirmGoogleLink()"></div>`,
-    `<button class="btn btn-ghost" onclick="closeModal();pendingGoogle=null">Cancelar</button><button class="btn btn-primary" onclick="confirmGoogleLink()">Vincular e entrar</button>`);
-}
-let pendingGoogle=null;
-async function confirmGoogleLink(){
-  if(!pendingGoogle)return;
-  const targetId=$('gLinkUser').value;
-  const pass=$('gAdminPass').value;
-  if(!pass)return toast('Digite a senha de um administrador','warn');
-  const ph=await sha256(pass);
-  const admin=S.users.find(x=>x.role==='admin'&&x.hash===ph);
-  if(!admin)return toast('Senha de administrador inválida','err');
-  const u=S.users.find(x=>x.id===targetId);if(!u)return toast('Usuário não encontrado','err');
-  if(S.users.some(x=>x.googleSub===pendingGoogle.sub&&x.id!==u.id))return toast('Esta conta Google já está vinculada a outro usuário','err');
-  u.googleSub=pendingGoogle.sub;u.googleEmail=pendingGoogle.email;if(!u.picture)u.picture=pendingGoogle.picture;
-  save('users');
-  const data=pendingGoogle.data;pendingGoogle=null;
-  closeModal();finishGoogleLogin(u,data);
-  toast('Conta Google vinculada a '+u.name);
-}
-function finishGoogleLogin(u,data){
-  session={id:u.id,name:u.name,user:u.user,role:u.role,google:true,picture:u.picture||data.picture||''};
-  DB.set('session',session);
-  if(window.google?.accounts?.id)try{google.accounts.id.disableAutoSelect()}catch(e){}
-  enterApp();
-}
-function googleHelp(){
-  openModal('Como ativar o login com Google',`
-    <div style="font-size:.88rem;line-height:1.65;color:var(--txt)">
-      <p style="margin-bottom:10px">O login com Google é gratuito. Você precisa criar um <b>Client ID</b> uma única vez:</p>
-      <ol style="margin:0 0 12px 18px;display:flex;flex-direction:column;gap:7px">
-        <li>Acesse <b>console.cloud.google.com</b> e crie um projeto (qualquer nome).</li>
-        <li>Vá em <b>APIs e serviços → Tela de consentimento OAuth</b>, escolha <b>Externo</b> e preencha o nome do app e seu e-mail.</li>
-        <li>Em <b>Credenciais → Criar credenciais → ID do cliente OAuth</b>, escolha <b>Aplicativo da Web</b>.</li>
-        <li>Em <b>Origens JavaScript autorizadas</b>, adicione o endereço onde o sistema fica hospedado (ex.: <code>https://meupdv.vercel.app</code>). Inclua exatamente o domínio, com https.</li>
-        <li>Copie o <b>Client ID</b> gerado e cole no campo aqui nas Configurações.</li>
-      </ol>
-      <p style="background:var(--warm-soft);color:#8A5A14;border-radius:8px;padding:10px;font-size:.82rem">Importante: o botão do Google só funciona em <b>site hospedado com HTTPS</b> cujo domínio esteja autorizado. Não funciona ao abrir o arquivo direto do celular nem dentro de webviews.</p>
-    </div>`,
-    `<button class="btn btn-primary" onclick="closeModal()">Entendi</button>`,true);
 }
 function openAccountMenu(){
   const isAdmin=session.role==='admin';
   openModal('Conta',`
     <div style="display:flex;align-items:center;gap:13px;padding:6px 2px 16px;border-bottom:1px solid var(--line);margin-bottom:14px">
       <div style="width:48px;height:48px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.3rem">${(session.name[0]||'?').toUpperCase()}</div>
-      <div><div style="font-weight:700;font-size:1.05rem">${esc(session.name)}</div><div style="font-size:.8rem;color:var(--txt-soft)">${session.role==='admin'?'Administrador':'Operador de caixa'}${session.google?' · via Google':''}</div></div>
+      <div><div style="font-weight:700;font-size:1.05rem">${esc(session.name)}</div><div style="font-size:.8rem;color:var(--txt-soft)">${session.role==='admin'?'Administrador':'Operador de caixa'}</div></div>
     </div>
     <button class="btn btn-ghost btn-block" style="justify-content:flex-start;gap:10px;margin-bottom:8px" onclick="switchUser()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11l-3 3-2-2"/></svg> Trocar de usuário</button>
     ${isAdmin?`<button class="btn btn-ghost btn-block" style="justify-content:flex-start;gap:10px;margin-bottom:8px" onclick="closeModal();go('config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg> Gerenciar usuários</button>`:''}
@@ -2418,8 +2306,7 @@ function enterApp(){
   $('loginScreen').style.display='none';$('app').classList.add('on');
   $('userName').textContent=session.name;
   $('userRole').textContent=session.role==='admin'?'Administrador':'Operador de caixa';
-  if(session.picture){$('userAvatar').innerHTML='<img src="'+esc(session.picture)+'" referrerpolicy="no-referrer" alt="">'}
-  else{$('userAvatar').textContent=(session.name[0]||'?').toUpperCase()}
+  $('userAvatar').textContent=(session.name[0]||'?').toUpperCase();
   document.querySelectorAll('[data-perm]').forEach(el=>{el.style.display=can(el.dataset.perm)?'':'none'});
   document.querySelectorAll('[data-perm-act]').forEach(el=>{el.style.display=can(el.dataset.permAct)?'':'none'});
   applyStoreName();updateCashPill();refreshHoldsBadge();go('pdv');
@@ -3449,9 +3336,9 @@ function renderReports(){
 /* ============================================================
    CONFIGURAÇÕES
    ------------------------------------------------------------
-   Dados da loja (saem no cupom), chave PIX, login do Google, gestão
-   de usuários, backup completo em JSON (exportar/importar tudo) e o
-   acesso à Central de Dados (importar/exportar tabelas em CSV).
+   Dados da loja (saem no cupom), chave PIX, gestão de usuários,
+   backup completo em JSON (exportar/importar tudo) e o acesso à
+   Central de Dados (importar/exportar tabelas em CSV).
    ============================================================ */
 function renderConfig(){
   const st=S.settings;
@@ -3477,8 +3364,6 @@ function renderConfig(){
           <div class="field full"><label>Mensagem no rodapé do cupom</label><input class="inp" id="stFoot" value="${esc(st.footer)}"></div>
           <div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="stNoStock" ${st.allowNoStock?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Permitir venda com estoque zerado (apenas avisa)</label></div>
           <div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="stAutoPrint" ${st.autoPrint?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Imprimir cupom automaticamente ao finalizar a venda</label></div>
-          <div class="field full" style="border-top:1px solid var(--line);padding-top:14px;margin-top:4px"><label>Login com Google — ID do Cliente (Client ID)</label><input class="inp money" id="stGoogleId" value="${esc(st.googleClientId||'')}" placeholder="000000-xxxx.apps.googleusercontent.com" style="font-size:.82rem"><p style="font-size:.76rem;color:var(--txt-soft);margin-top:6px;line-height:1.5">Cole aqui o Client ID do Google Cloud para habilitar “Entrar com Google” na tela de login. <button type="button" class="lk" onclick="googleHelp()" style="background:none;border:none;color:var(--brand);cursor:pointer;text-decoration:underline;padding:0;font-size:.76rem">Como obter?</button></p></div>
-          <div class="field full"><label style="display:flex;align-items:center;gap:8px;text-transform:none;font-size:.88rem;color:var(--txt)"><input type="checkbox" id="stGoogleAuto" ${st.googleAutoCreate?'checked':''} style="width:17px;height:17px;accent-color:var(--brand)"> Permitir que novos e-mails Google criem operador automaticamente</label></div>
         </div>
         <button class="btn btn-primary" onclick="saveSettings()">Salvar dados da loja</button>
       </div>
@@ -3530,7 +3415,7 @@ function pixTypeHint(){
   if(hint)hint.textContent=cfg.msg;
 }
 function saveSettings(){
-  Object.assign(S.settings,{storeName:$('stNome').value.trim()||'PinhoPDV',doc:$('stDoc').value.trim(),phone:$('stFone').value.trim(),address:$('stEnd').value.trim(),footer:$('stFoot').value.trim(),allowNoStock:$('stNoStock').checked,autoPrint:$('stAutoPrint').checked,pixCity:$('stPixCity').value.trim(),googleClientId:$('stGoogleId').value.trim(),googleAutoCreate:$('stGoogleAuto').checked});
+  Object.assign(S.settings,{storeName:$('stNome').value.trim()||'PinhoPDV',doc:$('stDoc').value.trim(),phone:$('stFone').value.trim(),address:$('stEnd').value.trim(),footer:$('stFoot').value.trim(),allowNoStock:$('stNoStock').checked,autoPrint:$('stAutoPrint').checked,pixCity:$('stPixCity').value.trim()});
   // PIX: valida e formata a chave conforme o tipo
   const ptype=$('stPixType').value, praw=$('stPixKey').value.trim();
   if(praw){
@@ -3538,7 +3423,7 @@ function saveSettings(){
     if(!norm.ok){toast(norm.err||'Chave PIX inválida','err');return}
     S.settings.pixType=ptype;S.settings.pixKey=praw;
   }else{S.settings.pixType=ptype;S.settings.pixKey=''}
-  save('settings');applyStoreName();_gsiReady=false;toast('Dados da loja salvos');
+  save('settings');applyStoreName();toast('Dados da loja salvos');
 }
 function openUserModal(id){
   const u=id?S.users.find(x=>x.id===id):null;
@@ -3590,8 +3475,8 @@ function exportTable(target){
     rows=S.customers.map(c=>[c.name,c.phone||'',c.email||'',c.doc||'',c.obs||'',c.createdAt?fmtBR(new Date(c.createdAt)):'']);
   }else if(target==='users'){
     name='usuarios';
-    headers=['Nome','Usuário','Perfil','E-mail Google'];
-    rows=S.users.map(u=>[u.name,u.user,u.role==='admin'?'Administrador':'Operador',u.googleEmail||'']);
+    headers=['Nome','Usuário','Perfil'];
+    rows=S.users.map(u=>[u.name,u.user,u.role==='admin'?'Administrador':'Operador']);
   }else if(target==='sales'){
     name='vendas';
     headers=['Cupom','Data','Hora','Cliente','Vendedor','Itens','Subtotal','Desconto','Devolvido','Total líquido','Pagamentos','Status'];
@@ -4304,7 +4189,7 @@ function installApp(){
   await ensureAdmin();
   if(!DB.ok)toast('Aviso: armazenamento do navegador indisponível — os dados não serão salvos ao fechar. Hospede o arquivo (https) para persistência.','warn');
   if(session&&S.users.some(u=>u.id===session.id))enterApp();
-  else{session=null;$('loginScreen').style.display='flex';initGoogleLogin()}
+  else{session=null;$('loginScreen').style.display='flex'}
 })();
 </script>
 </body>
