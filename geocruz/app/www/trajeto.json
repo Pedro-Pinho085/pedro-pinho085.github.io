@@ -5,35 +5,27 @@
  "obs": "Locais catolicos, cemiterios e cruzeiros ate 350 m do eixo da via. Confira e ajuste na aba Pontos.",
  "pontos": [
   {
-   "id": "t686750526",
-   "nome": "Igreja sem nome",
-   "tipo": "Igreja",
-   "lat": -3.284831,
-   "lon": -39.265118,
-   "corr": 0
-  },
-  {
-   "id": "t382908347",
+   "id": "t455558927",
    "nome": "Cemiterio",
    "tipo": "Cemiterio",
-   "lat": -3.350406,
-   "lon": -39.134673,
+   "lat": -3.523087,
+   "lon": -39.489744,
    "corr": 0
   },
   {
-   "id": "t660346325",
-   "nome": "Paróquia São Luís Gonzaga",
+   "id": "t1280404358",
+   "nome": "Igreja Matriz",
    "tipo": "Igreja",
-   "lat": -3.548329,
-   "lon": -38.829729,
+   "lat": -3.599196,
+   "lon": -39.436076,
    "corr": 0
   },
   {
-   "id": "t6847395127",
-   "nome": "Capela São Domingos de Gusmão",
-   "tipo": "Capela",
-   "lat": -3.600599,
-   "lon": -38.977147,
+   "id": "t538783627",
+   "nome": "Cemitério Hilário Teixeira Ramos",
+   "tipo": "Cemiterio",
+   "lat": -3.601514,
+   "lon": -39.437477,
    "corr": 0
   },
   {
@@ -45,51 +37,35 @@
    "corr": 0
   },
   {
+   "id": "t356104371",
+   "nome": "Igreja da Matriz São Luís Gonzaga",
+   "tipo": "Igreja",
+   "lat": -3.672645,
+   "lon": -39.240766,
+   "corr": 0
+  },
+  {
+   "id": "t231863055",
+   "nome": "Cemiterio",
+   "tipo": "Cemiterio",
+   "lat": -3.673991,
+   "lon": -39.234645,
+   "corr": 0
+  },
+  {
+   "id": "t639094582",
+   "nome": "Igreja de Nossa Senhora da Natividade",
+   "tipo": "Igreja",
+   "lat": -3.676656,
+   "lon": -39.348931,
+   "corr": 0
+  },
+  {
    "id": "t741356280",
    "nome": "Igreja sem nome",
    "tipo": "Igreja",
    "lat": -3.685206,
    "lon": -38.911977,
-   "corr": 0
-  },
-  {
-   "id": "t1126952526",
-   "nome": "Shalom Iparana",
-   "tipo": "Igreja",
-   "lat": -3.69247,
-   "lon": -38.617005,
-   "corr": 0
-  },
-  {
-   "id": "t6797545388",
-   "nome": "Paróquia de Nossa Senhora de Fátima",
-   "tipo": "Igreja",
-   "lat": -3.708898,
-   "lon": -38.589598,
-   "corr": 0
-  },
-  {
-   "id": "t6797577194",
-   "nome": "Comunidade - Paróquia Sagrada Família",
-   "tipo": "Igreja",
-   "lat": -3.709323,
-   "lon": -38.593408,
-   "corr": 0
-  },
-  {
-   "id": "t687203151",
-   "nome": "Igreja de Nossa Senhora do Perpétuo Socorro",
-   "tipo": "Igreja",
-   "lat": -3.716411,
-   "lon": -38.580025,
-   "corr": 0
-  },
-  {
-   "id": "t11027955366",
-   "nome": "Igreja sem nome",
-   "tipo": "Igreja",
-   "lat": -3.720994,
-   "lon": -38.571971,
    "corr": 0
   },
   {
@@ -101,11 +77,19 @@
    "corr": 0
   },
   {
-   "id": "t14763693",
-   "nome": "Igreja de São Gerardo",
+   "id": "t12379656686",
+   "nome": "Igreja de sao francisco",
    "tipo": "Igreja",
-   "lat": -3.733439,
-   "lon": -38.556412,
+   "lat": -3.72996,
+   "lon": -38.651457,
+   "corr": 0
+  },
+  {
+   "id": "t725155424",
+   "nome": "Igreja do Imaculado Coração de Maria",
+   "tipo": "Igreja",
+   "lat": -3.730137,
+   "lon": -38.646607,
    "corr": 0
   },
   {
@@ -114,6 +98,14 @@
    "tipo": "Capela",
    "lat": -3.734472,
    "lon": -38.561648,
+   "corr": 0
+  },
+  {
+   "id": "t363404238",
+   "nome": "Igreja de Nossa Senhora dos Prazeres",
+   "tipo": "Igreja",
+   "lat": -3.734739,
+   "lon": -38.654623,
    "corr": 0
   },
   {
@@ -186,6 +178,22 @@
    "tipo": "Cemiterio",
    "lat": -3.741931,
    "lon": -38.588444,
+   "corr": 0
+  },
+  {
+   "id": "t4495699131",
+   "nome": "Santuário Nossa Senhora de Lourdes",
+   "tipo": "Santuario",
+   "lat": -3.742831,
+   "lon": -38.548883,
+   "corr": 0
+  },
+  {
+   "id": "t553852559",
+   "nome": "Paroquia de São Raimundo Nonato",
+   "tipo": "Igreja",
+   "lat": -3.744237,
+   "lon": -38.553739,
    "corr": 0
   },
   {
