@@ -1,0 +1,200 @@
+{
+ "nome": "Sao Luis do Curu -> Fortaleza / Itapipoca",
+ "gerado": "2026-09-03",
+ "fonte": "OpenStreetMap (Overpass) + OSRM",
+ "obs": "Locais catolicos, cemiterios e cruzeiros ate 350 m do eixo da via. Confira e ajuste na aba Pontos.",
+ "pontos": [
+  {
+   "id": "t686750526",
+   "nome": "Igreja sem nome",
+   "tipo": "Igreja",
+   "lat": -3.284831,
+   "lon": -39.265118,
+   "corr": 0
+  },
+  {
+   "id": "t382908347",
+   "nome": "Cemiterio",
+   "tipo": "Cemiterio",
+   "lat": -3.350406,
+   "lon": -39.134673,
+   "corr": 0
+  },
+  {
+   "id": "t660346325",
+   "nome": "Paróquia São Luís Gonzaga",
+   "tipo": "Igreja",
+   "lat": -3.548329,
+   "lon": -38.829729,
+   "corr": 0
+  },
+  {
+   "id": "t6847395127",
+   "nome": "Capela São Domingos de Gusmão",
+   "tipo": "Capela",
+   "lat": -3.600599,
+   "lon": -38.977147,
+   "corr": 0
+  },
+  {
+   "id": "t741303898",
+   "nome": "Cemiterio",
+   "tipo": "Cemiterio",
+   "lat": -3.60949,
+   "lon": -38.971078,
+   "corr": 0
+  },
+  {
+   "id": "t741356280",
+   "nome": "Igreja sem nome",
+   "tipo": "Igreja",
+   "lat": -3.685206,
+   "lon": -38.911977,
+   "corr": 0
+  },
+  {
+   "id": "t1126952526",
+   "nome": "Shalom Iparana",
+   "tipo": "Igreja",
+   "lat": -3.69247,
+   "lon": -38.617005,
+   "corr": 0
+  },
+  {
+   "id": "t6797545388",
+   "nome": "Paróquia de Nossa Senhora de Fátima",
+   "tipo": "Igreja",
+   "lat": -3.708898,
+   "lon": -38.589598,
+   "corr": 0
+  },
+  {
+   "id": "t6797577194",
+   "nome": "Comunidade - Paróquia Sagrada Família",
+   "tipo": "Igreja",
+   "lat": -3.709323,
+   "lon": -38.593408,
+   "corr": 0
+  },
+  {
+   "id": "t687203151",
+   "nome": "Igreja de Nossa Senhora do Perpétuo Socorro",
+   "tipo": "Igreja",
+   "lat": -3.716411,
+   "lon": -38.580025,
+   "corr": 0
+  },
+  {
+   "id": "t11027955366",
+   "nome": "Igreja sem nome",
+   "tipo": "Igreja",
+   "lat": -3.720994,
+   "lon": -38.571971,
+   "corr": 0
+  },
+  {
+   "id": "t483604606",
+   "nome": "Cemitério Mucipal do Boqueirão",
+   "tipo": "Cemiterio",
+   "lat": -3.729942,
+   "lon": -38.767224,
+   "corr": 0
+  },
+  {
+   "id": "t14763693",
+   "nome": "Igreja de São Gerardo",
+   "tipo": "Igreja",
+   "lat": -3.733439,
+   "lon": -38.556412,
+   "corr": 0
+  },
+  {
+   "id": "t1109831645",
+   "nome": "Capela",
+   "tipo": "Capela",
+   "lat": -3.734472,
+   "lon": -38.561648,
+   "corr": 0
+  },
+  {
+   "id": "t658749857",
+   "nome": "Igreja sem nome",
+   "tipo": "Igreja",
+   "lat": -3.736226,
+   "lon": -38.569629,
+   "corr": 0
+  },
+  {
+   "id": "t4495743938",
+   "nome": "Mitra Arquidiocesana de Fortaleza",
+   "tipo": "Igreja",
+   "lat": -3.737406,
+   "lon": -38.544211,
+   "corr": 0
+  },
+  {
+   "id": "t5150117302",
+   "nome": "Capela Shopping Benfica",
+   "tipo": "Capela",
+   "lat": -3.738902,
+   "lon": -38.539677,
+   "corr": 0
+  },
+  {
+   "id": "t965646062",
+   "nome": "Igreja São José Operário",
+   "tipo": "Igreja",
+   "lat": -3.739842,
+   "lon": -38.545189,
+   "corr": 0
+  },
+  {
+   "id": "t15812365",
+   "nome": "Paroquia Jesus, Maria, José",
+   "tipo": "Igreja",
+   "lat": -3.739902,
+   "lon": -38.587694,
+   "corr": 0
+  },
+  {
+   "id": "t243209782",
+   "nome": "Igreja Redonda",
+   "tipo": "Igreja",
+   "lat": -3.74116,
+   "lon": -38.561126,
+   "corr": 0
+  },
+  {
+   "id": "t15708016",
+   "nome": "Igreja Nossa Senhora dos Remédios",
+   "tipo": "Igreja",
+   "lat": -3.741664,
+   "lon": -38.540824,
+   "corr": 0
+  },
+  {
+   "id": "t474087539",
+   "nome": "Igreja São Vicente de Paulo",
+   "tipo": "Igreja",
+   "lat": -3.74171,
+   "lon": -38.61271,
+   "corr": 0
+  },
+  {
+   "id": "t361302630",
+   "nome": "Cemitério Santo Antonio",
+   "tipo": "Cemiterio",
+   "lat": -3.741931,
+   "lon": -38.588444,
+   "corr": 0
+  },
+  {
+   "id": "t305797113",
+   "nome": "Seminário Orionita São José",
+   "tipo": "Igreja",
+   "lat": -3.75117,
+   "lon": -38.62727,
+   "corr": 0
+  }
+ ]
+}
