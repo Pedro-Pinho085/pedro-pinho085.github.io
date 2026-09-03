@@ -519,6 +519,10 @@ function desenharLista(){
     li.append(t,n,b); ul.append(li);
   });
 }
+// pontos vindos de um arquivo de trajeto tem id tipo "t123..."; os que voce
+// marca na aba Marcar tem id "p123...". Aqui a gente TROCA os do trajeto pelos
+// do arquivo (limpa os antigos) e preserva os que voce marcou.
+const ehDoTrajeto = id => /^t\d+$/.test(String(id));
 $("btn-trajeto").onclick = async function(){
   const b = this; b.disabled = true;
   try{
@@ -526,20 +530,21 @@ $("btn-trajeto").onclick = async function(){
     if(!r.ok) throw 0;
     const doc = await r.json();
     const novos = Array.isArray(doc) ? doc : (doc.pontos || []);
-    const ids = new Set(pontos.map(p => p.id));
-    let n = 0;
+    const meus = pontos.filter(p => !ehDoTrajeto(p.id));
+    const tinha = pontos.length - meus.length;
+    const add = [];
     for(const p of novos){
-      if(p && typeof p.lat === "number" && typeof p.lon === "number" && p.id && !ids.has(p.id)){
-        pontos.push({
+      if(p && typeof p.lat === "number" && typeof p.lon === "number" && p.id){
+        add.push({
           id: p.id, nome: p.nome || (p.tipo || "Ponto"), tipo: p.tipo || "Igreja",
           lat: p.lat, lon: p.lon, prec: p.prec || null,
           corr: p.corr || 0, em: p.em || new Date().toISOString()
         });
-        ids.add(p.id); n++;
       }
     }
+    pontos = meus.concat(add);
     salvar();
-    toast(n ? n + " ponto(s) do trajeto adicionados" : "O trajeto ja esta carregado");
+    toast(tinha ? "Trajeto atualizado (" + add.length + " pontos)" : add.length + " pontos do trajeto carregados");
   }catch(e){
     toast("Nao consegui carregar o trajeto");
   }finally{ b.disabled = false; }

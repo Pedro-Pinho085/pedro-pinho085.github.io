@@ -1,6 +1,6 @@
 /* Sinal da Cruz - service worker
    Cache do "app shell" para abrir offline dentro do onibus. */
-const CACHE = "sinaldacruz-v2";
+const CACHE = "sinaldacruz-v3";
 const ASSETS = [
   "./",
   "./index.html",
