@@ -1,0 +1,22 @@
+{
+  "name": "sinal-da-cruz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sinal da Cruz - app iOS (casca Capacitor) que avisa antes de cada igreja do trajeto, com GPS em segundo plano.",
+  "scripts": {
+    "add:ios": "cap add ios",
+    "sync": "cap sync",
+    "open:ios": "cap open ios",
+    "copy": "cap copy"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/ios": "^6.2.0",
+    "@capacitor/local-notifications": "^6.1.2",
+    "@capacitor/haptics": "^6.0.3",
+    "@capacitor-community/background-geolocation": "^1.2.24"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
+  }
+}

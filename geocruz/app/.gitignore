@@ -1,0 +1,11 @@
+# dependencias e plataformas nativas (geradas no Mac)
+node_modules/
+ios/
+android/
+
+# lixo do sistema / build
+.DS_Store
+*.log
+npm-debug.log*
+package-lock.json
+yarn.lock

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E2440">
+<title>Sinal da Cruz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Karla:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --azul:#0E2440;
+    --azul-2:#15304F;
+    --azul-3:#1D3D63;
+    --cal:#E8E4DA;
+    --cal-dim:#9FAAB9;
+    --ouro:#C9A227;
+    --telha:#A65A3A;
+    --linha:rgba(232,228,218,.14);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--azul);color:var(--cal)}
+  body{
+    font-family:'Karla',system-ui,sans-serif;
+    min-height:100dvh;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overscroll-behavior:none;
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:18px 18px 40px}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px}
+  h1{
+    font-family:'Cinzel',serif;font-weight:700;font-size:19px;letter-spacing:.14em;
+    margin:0;text-transform:uppercase;color:var(--cal)
+  }
+  .sub{font-size:11px;letter-spacing:.08em;color:var(--cal-dim);text-transform:uppercase}
+
+  nav{display:flex;gap:2px;background:var(--azul-2);border-radius:2px;padding:3px;margin-bottom:20px}
+  nav button{
+    flex:1;background:none;border:0;color:var(--cal-dim);font-family:'Karla',sans-serif;
+    font-size:13px;font-weight:600;letter-spacing:.06em;padding:10px 4px;border-radius:2px;cursor:pointer;
+    text-transform:uppercase;transition:background .18s,color .18s
+  }
+  nav button[aria-selected="true"]{background:var(--azul-3);color:var(--cal)}
+  nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ouro);outline-offset:2px}
+
+  .panel{display:none}
+  .panel.on{display:block}
+
+  /* ---- leitura principal ---- */
+  .leitura{text-align:center;padding:14px 0 6px}
+  .dist{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;
+    font-size:clamp(64px,22vw,104px);line-height:.9;letter-spacing:-.04em;
+    color:var(--cal);transition:color .3s
+  }
+  .dist.perto{color:var(--ouro)}
+  .unid{font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--cal-dim);margin-left:4px}
+  .alvo{
+    font-family:'Cinzel',serif;font-size:16px;letter-spacing:.1em;text-transform:uppercase;
+    margin-top:12px;min-height:22px
+  }
+  .alvo small{display:block;font-family:'Karla',sans-serif;font-size:12px;letter-spacing:.06em;color:var(--cal-dim);text-transform:none;margin-top:4px}
+
+  /* ---- cruz (assinatura) ---- */
+  .cruz-area{height:132px;display:flex;align-items:center;justify-content:center;margin:6px 0 2px}
+  svg.cruz line{
+    stroke:var(--ouro);stroke-width:5;stroke-linecap:round;
+    stroke-dasharray:var(--len);stroke-dashoffset:var(--len);opacity:0
+  }
+  svg.cruz.traca line{animation:tracar .42s ease-out forwards}
+  svg.cruz.traca line.v{animation-delay:0s}
+  svg.cruz.traca line.h{animation-delay:.34s}
+  @keyframes tracar{from{stroke-dashoffset:var(--len);opacity:1}to{stroke-dashoffset:0;opacity:1}}
+  .cruz-halo{position:absolute;width:150px;height:150px;border:1px solid var(--ouro);border-radius:50%;opacity:0}
+  .cruz-halo.pulsa{animation:halo 1.5s ease-out}
+  @keyframes halo{0%{transform:scale(.5);opacity:.55}100%{transform:scale(1.5);opacity:0}}
+  .cruz-holder{position:relative;display:flex;align-items:center;justify-content:center}
+
+  /* ---- status ---- */
+  .status{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--linha);
+    border-top:1px solid var(--linha);border-bottom:1px solid var(--linha);margin:22px 0
+  }
+  .status div{background:var(--azul);padding:12px 8px;text-align:center}
+  .status .rot{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cal-dim)}
+  .status .val{font-family:'IBM Plex Mono',monospace;font-size:17px;margin-top:3px}
+
+  button.acao{
+    width:100%;background:var(--ouro);color:#12233C;border:0;border-radius:2px;
+    font-family:'Cinzel',serif;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;
+    padding:19px;cursor:pointer;transition:filter .15s
+  }
+  button.acao:active{filter:brightness(.88)}
+  button.acao.parar{background:var(--telha);color:var(--cal)}
+  button.sec{
+    width:100%;background:none;color:var(--cal);border:1px solid var(--linha);border-radius:2px;
+    font-family:'Karla',sans-serif;font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;
+    padding:14px;cursor:pointer;margin-top:10px
+  }
+  button.sec:active{background:var(--azul-2)}
+
+  .marcar-btn{
+    height:170px;font-size:19px;margin-top:16px;line-height:1.4;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px
+  }
+  .marcar-btn span{font-family:'Karla',sans-serif;font-size:11px;font-weight:400;letter-spacing:.06em;text-transform:none;opacity:.75}
+  .marcar-btn:disabled{background:var(--azul-2);color:var(--cal-dim);cursor:not-allowed}
+
+  /* ---- campos ---- */
+  label{display:block;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--cal-dim);margin:16px 0 6px}
+  input,select{
+    width:100%;background:var(--azul-2);border:1px solid var(--linha);border-radius:2px;color:var(--cal);
+    font-family:'Karla',sans-serif;font-size:16px;padding:12px
+  }
+  .dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  /* ---- lista ---- */
+  ul{list-style:none;margin:0;padding:0}
+  li{border-bottom:1px solid var(--linha);padding:14px 0;display:flex;align-items:center;gap:12px}
+  .tipo{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--ouro);
+    border:1px solid var(--ouro);border-radius:2px;padding:3px 5px;flex:none;text-transform:uppercase
+  }
+  .nome{flex:1;font-size:15px;min-width:0}
+  .nome em{display:block;font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:11px;color:var(--cal-dim);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .del{background:none;border:0;color:var(--cal-dim);font-size:20px;padding:6px 4px;cursor:pointer;flex:none}
+  .del:active{color:var(--telha)}
+
+  .vazio{text-align:center;padding:44px 16px;color:var(--cal-dim);font-size:14px;line-height:1.65}
+  .vazio strong{display:block;font-family:'Cinzel',serif;color:var(--cal);font-size:15px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+
+  .nota{font-size:12px;line-height:1.65;color:var(--cal-dim);margin-top:18px;border-left:2px solid var(--linha);padding-left:12px}
+  .erro{background:rgba(166,90,58,.16);border-left:2px solid var(--telha);padding:12px;font-size:13px;line-height:1.6;margin-top:16px;border-radius:0 2px 2px 0}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,80px);
+    background:var(--ouro);color:#12233C;font-size:13px;font-weight:600;padding:12px 20px;border-radius:2px;
+    opacity:0;transition:transform .3s,opacity .3s;pointer-events:none;z-index:50;max-width:88vw;text-align:center
+  }
+  .toast.on{transform:translate(-50%,0);opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    svg.cruz.traca line{animation-duration:.01s}
+    .cruz-halo.pulsa{animation:none}
+    *{transition-duration:.01s!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Sinal da Cruz</h1>
+    <div class="sub" id="contador">0 pontos</div>
+  </header>
+
+  <nav role="tablist">
+    <button id="tab-vigiar" role="tab" aria-selected="true">Vigiar</button>
+    <button id="tab-marcar" role="tab" aria-selected="false">Marcar</button>
+    <button id="tab-lista"  role="tab" aria-selected="false">Pontos</button>
+  </nav>
+
+  <!-- ============ VIGIAR ============ -->
+  <section class="panel on" id="p-vigiar">
+    <div class="cruz-area">
+      <div class="cruz-holder">
+        <div class="cruz-halo" id="halo"></div>
+        <svg class="cruz" id="cruz" width="96" height="120" viewBox="0 0 96 120" aria-hidden="true">
+          <line class="v" x1="48" y1="10" x2="48" y2="110" style="--len:100"></line>
+          <line class="h" x1="12" y1="46" x2="84" y2="46" style="--len:72"></line>
+        </svg>
+      </div>
+    </div>
+
+    <div class="leitura">
+      <div><span class="dist" id="dist">&mdash;</span><span class="unid">m</span></div>
+      <div class="alvo" id="alvo">Parado<small>Toque em Come&ccedil;ar a vigiar</small></div>
+    </div>
+
+    <div class="status">
+      <div><div class="rot">Velocidade</div><div class="val" id="vel">&mdash;</div></div>
+      <div><div class="rot">Precis&atilde;o</div><div class="val" id="prec">&mdash;</div></div>
+      <div><div class="rot">Aviso em</div><div class="val" id="gatilho">&mdash;</div></div>
+    </div>
+
+    <button class="acao" id="btn-vigiar">Come&ccedil;ar a vigiar</button>
+    <div id="erro-vigiar"></div>
+    <p class="nota" id="nota-vigiar">O aviso soa com anteced&ecirc;ncia calculada pela sua velocidade &mdash; quanto mais r&aacute;pido o &ocirc;nibus, mais longe ele dispara.</p>
+  </section>
+
+  <!-- ============ MARCAR ============ -->
+  <section class="panel" id="p-marcar">
+    <label for="m-nome">Nome do ponto</label>
+    <input id="m-nome" type="text" placeholder="Capela de S&atilde;o Francisco" autocomplete="off">
+
+    <div class="dupla">
+      <div>
+        <label for="m-tipo">Tipo</label>
+        <select id="m-tipo">
+          <option value="Igreja">Igreja</option>
+          <option value="Capela" selected>Capela</option>
+          <option value="Cruzeiro">Cruzeiro</option>
+          <option value="Cemit&eacute;rio">Cemit&eacute;rio</option>
+          <option value="Gruta">Gruta / imagem</option>
+        </select>
+      </div>
+      <div>
+        <label for="m-reacao">Recuo (s)</label>
+        <input id="m-reacao" type="number" min="0" max="8" step="0.5" value="3">
+      </div>
+    </div>
+
+    <div class="status" style="margin:20px 0 0">
+      <div><div class="rot">Velocidade</div><div class="val" id="m-vel">&mdash;</div></div>
+      <div><div class="rot">Precis&atilde;o</div><div class="val" id="m-prec">&mdash;</div></div>
+      <div><div class="rot">Recuo</div><div class="val" id="m-recuo">&mdash;</div></div>
+    </div>
+
+    <button class="acao marcar-btn" id="btn-marcar" disabled>
+      Marcar aqui
+      <span id="m-hint">Ligue o GPS abaixo</span>
+    </button>
+    <button class="sec" id="btn-gps">Ligar GPS</button>
+    <div id="erro-marcar"></div>
+
+    <p class="nota">Toque no instante em que passar pela porta. O app desconta os metros que o &ocirc;nibus andou entre voc&ecirc; ver e voc&ecirc; tocar, usando velocidade e dire&ccedil;&atilde;o reais. Com o &ocirc;nibus a 60 km/h e recuo de 3 s, isso corrige cerca de 50 metros.</p>
+  </section>
+
+  <!-- ============ LISTA ============ -->
+  <section class="panel" id="p-lista">
+    <ul id="lista"></ul>
+    <div class="vazio" id="vazio">
+      <strong>Nenhum ponto ainda</strong>
+      Abra <b>Marcar</b> na pr&oacute;xima ida &agrave; faculdade e toque a cada igreja, capela ou cemit&eacute;rio do caminho.
+    </div>
+    <button class="sec" id="btn-trajeto">Carregar pontos do trajeto (S. Lu&iacute;s do Curu &rarr; Fortaleza / Itapipoca)</button>
+    <button class="sec" id="btn-exportar">Copiar pontos para enviar</button>
+    <button class="sec" id="btn-importar">Colar pontos recebidos</button>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ================================================================
+   Sinal da Cruz - versao com casca nativa (Capacitor).
+   Roda tambem como pagina web comum; o codigo detecta o ambiente.
+   ================================================================ */
+
+/* ---------- ambiente ---------- */
+const CAP = window.Capacitor;
+const NATIVO = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
+const BgGeo     = NATIVO ? CAP.registerPlugin("BackgroundGeolocation") : null;
+const LocalNotif = NATIVO ? (CAP.Plugins && CAP.Plugins.LocalNotifications) : null;
+const Haptics    = NATIVO ? (CAP.Plugins && CAP.Plugins.Haptics) : null;
+let bgWatcherId = null;
+
+/* ---------- estado ---------- */
+let pontos = [];
+let watchId = null, modoVigia = false, gpsMarcar = false;
+let ultimaFix = null, wakeLock = null, audioCtx = null;
+const avisado = new Map();       // id -> timestamp do ultimo aviso
+const CHAVE = "sinaldacruz:pontos";
+const COOLDOWN = 90000;          // 90 s sem repetir o mesmo ponto
+const ANTECEDENCIA = 6;          // segundos de aviso antes de chegar
+const MIN_GATILHO = 80;          // metros - piso, abaixo disso o GPS nao acompanha
+
+/* ---------- utilidades ---------- */
+const $ = id => document.getElementById(id);
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("on"), 2600);
+}
+function erro(alvo, msg){
+  $(alvo).innerHTML = msg ? '<div class="erro">'+msg+'</div>' : '';
+}
+function haversine(a1,o1,a2,o2){
+  const R=6371000, r=Math.PI/180;
+  const dA=(a2-a1)*r, dO=(o2-o1)*r;
+  const x=Math.sin(dA/2)**2 + Math.cos(a1*r)*Math.cos(a2*r)*Math.sin(dO/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+function recuar(lat,lon,rumo,metros){
+  const dLat = -(metros*Math.cos(rumo*Math.PI/180))/111320;
+  const dLon = -(metros*Math.sin(rumo*Math.PI/180))/(111320*Math.cos(lat*Math.PI/180));
+  return [lat+dLat, lon+dLon];
+}
+
+/* ---------- persistencia (localStorage) ---------- */
+function carregar(){
+  try{
+    const raw = localStorage.getItem(CHAVE);
+    pontos = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(pontos)) pontos = [];
+  }catch(e){ pontos = []; }
+  desenharLista();
+}
+function salvar(){
+  desenharLista();
+  try{ localStorage.setItem(CHAVE, JSON.stringify(pontos)); }
+  catch(e){ toast("Nao deu para salvar neste aparelho"); }
+}
+
+/* ---------- som e vibracao ---------- */
+function prepararAudio(){
+  try{
+    const C = window.AudioContext || window.webkitAudioContext;
+    if(!audioCtx) audioCtx = new C();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    const g = audioCtx.createGain(); g.gain.value = 0;
+    const o = audioCtx.createOscillator(); o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + .01);
+  }catch(e){}
+}
+function apitar(){
+  if(NATIVO && Haptics){
+    Haptics.vibrate({ duration: 260 }).catch(()=>{});
+    setTimeout(()=>Haptics.vibrate({ duration: 260 }).catch(()=>{}), 430);
+  }else if(navigator.vibrate){
+    navigator.vibrate([90,70,90,70,140]);
+  }
+  if(!audioCtx) return;
+  const t0 = audioCtx.currentTime;
+  [0,.22,.44].forEach((atraso,i)=>{
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = "sine";
+    o.frequency.value = i===2 ? 988 : 740;
+    g.gain.setValueAtTime(0, t0+atraso);
+    g.gain.linearRampToValueAtTime(.35, t0+atraso+.02);
+    g.gain.exponentialRampToValueAtTime(.001, t0+atraso+.19);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t0+atraso); o.stop(t0+atraso+.2);
+  });
+}
+function tracarCruz(){
+  const c = $("cruz"), h = $("halo");
+  c.classList.remove("traca"); h.classList.remove("pulsa");
+  void c.offsetWidth;
+  c.classList.add("traca"); h.classList.add("pulsa");
+}
+
+/* ---------- notificacoes ---------- */
+async function pedirPermissaoNotif(){
+  if(NATIVO){
+    try{ if(LocalNotif) await LocalNotif.requestPermissions(); }catch(e){}
+    return;
+  }
+  try{
+    if("Notification" in window && Notification.permission === "default"){
+      Notification.requestPermission();
+    }
+  }catch(e){}
+}
+async function notificar(titulo, corpo){
+  if(NATIVO){
+    if(!LocalNotif) return;
+    try{
+      await LocalNotif.schedule({ notifications: [{
+        id: Math.floor(Date.now() % 2000000000),
+        title: titulo,
+        body: corpo,
+        schedule: { at: new Date(Date.now() + 150) }
+      }]});
+    }catch(e){}
+    return;
+  }
+  // web: so quando o app esta em segundo plano (com o app aberto ja tem som + animacao)
+  if(!document.hidden) return;
+  try{
+    if(!("Notification" in window) || Notification.permission !== "granted") return;
+    new Notification(titulo, { body: corpo, tag: "sinal-da-cruz", renotify: true });
+  }catch(e){}
+}
+
+/* ---------- tela acesa (so web) ---------- */
+async function segurarTela(){
+  if(NATIVO) return;   // no nativo o GPS em 2o plano ja mantem tudo vivo
+  try{ if("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
+}
+function soltarTela(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; } }
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible" && modoVigia && !wakeLock) segurarTela();
+});
+
+/* ---------- GPS ---------- */
+const OPCOES = { enableHighAccuracy:true, maximumAge:1000, timeout:15000 };
+
+async function iniciarGPS(aoReceber, aoFalhar){
+  if(NATIVO){
+    try{
+      bgWatcherId = await BgGeo.addWatcher({
+        backgroundTitle: "Sinal da Cruz vigiando",
+        backgroundMessage: "Tocando o alerta antes de cada igreja do trajeto.",
+        requestPermissions: true,
+        stale: false,
+        distanceFilter: 12
+      }, (location, error) => {
+        if(error){
+          if(error.code === "NOT_AUTHORIZED"){
+            aoFalhar({ code:1, message:"Permissao de localizacao negada. Abra Ajustes > Sinal da Cruz > Localizacao e escolha “Sempre”." });
+          }else{
+            aoFalhar({ message: error.message || "Falha no GPS." });
+          }
+          return;
+        }
+        if(!location) return;
+        aoReceber({
+          coords: {
+            latitude:  location.latitude,
+            longitude: location.longitude,
+            accuracy:  location.accuracy,
+            speed:     (typeof location.speed === "number") ? location.speed : null,
+            heading:   (typeof location.bearing === "number") ? location.bearing : null
+          },
+          timestamp: location.time || Date.now()
+        });
+      });
+    }catch(e){
+      aoFalhar({ message: (e && e.message) || "Nao consegui ligar o GPS em segundo plano." });
+    }
+    return;
+  }
+  // web
+  if(!navigator.geolocation){ aoFalhar({ message:"Este navegador nao tem GPS." }); return; }
+  if(watchId !== null) navigator.geolocation.clearWatch(watchId);
+  watchId = navigator.geolocation.watchPosition(aoReceber, aoFalhar, OPCOES);
+}
+function pararGPS(){
+  if(NATIVO){
+    if(bgWatcherId){ BgGeo.removeWatcher({ id: bgWatcherId }).catch(()=>{}); bgWatcherId = null; }
+    return;
+  }
+  if(watchId !== null){ navigator.geolocation.clearWatch(watchId); watchId = null; }
+}
+function msgErroGPS(e){
+  if(e.code === 1) return "Permissao de localizacao negada. Libere nos ajustes e tente de novo.";
+  if(e.code === 2) return "Sem sinal de GPS no momento. Perto da janela do onibus costuma pegar melhor.";
+  if(e.code === 3) return "O GPS demorou demais para responder. Tente de novo.";
+  return e.message || "Falha no GPS.";
+}
+
+/* deriva velocidade e rumo quando o aparelho nao informa */
+function enriquecer(pos){
+  const c = pos.coords;
+  let vel = (c.speed !== null && c.speed >= 0) ? c.speed : null;
+  let rumo = (c.heading !== null && !isNaN(c.heading)) ? c.heading : null;
+  if(ultimaFix){
+    const dt = (pos.timestamp - ultimaFix.t)/1000;
+    const d = haversine(ultimaFix.lat, ultimaFix.lon, c.latitude, c.longitude);
+    if(dt > .4 && dt < 12){
+      if(vel === null) vel = d/dt;
+      if(rumo === null && d > 4){
+        const r = Math.PI/180;
+        const y = Math.sin((c.longitude-ultimaFix.lon)*r)*Math.cos(c.latitude*r);
+        const x = Math.cos(ultimaFix.lat*r)*Math.sin(c.latitude*r)
+                - Math.sin(ultimaFix.lat*r)*Math.cos(c.latitude*r)*Math.cos((c.longitude-ultimaFix.lon)*r);
+        rumo = (Math.atan2(y,x)*180/Math.PI + 360) % 360;
+      }
+    }
+  }
+  ultimaFix = { lat:c.latitude, lon:c.longitude, t:pos.timestamp, vel, rumo, prec:c.accuracy };
+  return ultimaFix;
+}
+
+/* ---------- VIGIAR ---------- */
+function aoVigiar(pos){
+  const f = enriquecer(pos);
+  const velKmh = f.vel ? f.vel*3.6 : 0;
+  $("vel").textContent  = f.vel !== null ? Math.round(velKmh)+" km/h" : "—";
+  $("prec").textContent = "±"+Math.round(pos.coords.accuracy)+" m";
+
+  const gatilho = Math.max(MIN_GATILHO, Math.round((f.vel||0)*ANTECEDENCIA));
+  $("gatilho").textContent = gatilho+" m";
+
+  if(!pontos.length){
+    $("dist").textContent = "—";
+    $("alvo").innerHTML = "Sem pontos<small>Carregue ou marque os pontos do trajeto primeiro</small>";
+    return;
+  }
+
+  let perto = null, menor = Infinity;
+  for(const p of pontos){
+    const d = haversine(f.lat, f.lon, p.lat, p.lon);
+    if(d < menor){ menor = d; perto = p; }
+  }
+  $("dist").textContent = menor > 9999 ? Math.round(menor/1000)+"k" : Math.round(menor);
+  $("dist").classList.toggle("perto", menor <= gatilho);
+  $("alvo").innerHTML = perto.nome + "<small>" + perto.tipo + "</small>";
+
+  const agora = Date.now();
+  if(menor <= gatilho && (agora - (avisado.get(perto.id)||0)) > COOLDOWN){
+    avisado.set(perto.id, agora);
+    apitar(); tracarCruz();
+    notificar("Sinal da Cruz — " + perto.nome, perto.tipo + " a " + Math.round(menor) + " m");
+  }
+}
+$("btn-vigiar").onclick = function(){
+  if(modoVigia){
+    modoVigia = false; pararGPS(); soltarTela();
+    this.textContent = "Começar a vigiar"; this.classList.remove("parar");
+    $("dist").textContent = "—"; $("dist").classList.remove("perto");
+    $("alvo").innerHTML = "Parado<small>Toque em Começar a vigiar</small>";
+    $("vel").textContent = $("prec").textContent = $("gatilho").textContent = "—";
+    return;
+  }
+  prepararAudio(); pedirPermissaoNotif(); segurarTela(); erro("erro-vigiar","");
+  modoVigia = true; ultimaFix = null; avisado.clear();
+  this.textContent = "Parar"; this.classList.add("parar");
+  $("alvo").innerHTML = "Procurando sinal…<small>Deixe o aparelho perto da janela</small>";
+  iniciarGPS(aoVigiar, e => {
+    erro("erro-vigiar", msgErroGPS(e));
+    modoVigia = false; pararGPS(); soltarTela();
+    $("btn-vigiar").textContent = "Começar a vigiar";
+    $("btn-vigiar").classList.remove("parar");
+  });
+};
+
+/* ---------- MARCAR ---------- */
+function aoMarcarFix(pos){
+  const f = enriquecer(pos);
+  const rec = parseFloat($("m-reacao").value) || 0;
+  $("m-vel").textContent   = f.vel !== null ? Math.round(f.vel*3.6)+" km/h" : "—";
+  $("m-prec").textContent  = "±"+Math.round(pos.coords.accuracy)+" m";
+  $("m-recuo").textContent = (f.vel && f.rumo !== null) ? Math.round(f.vel*rec)+" m" : "0 m";
+  $("btn-marcar").disabled = false;
+  $("m-hint").textContent  = "Toque ao passar pela porta";
+}
+$("btn-gps").onclick = function(){
+  gpsMarcar = true; ultimaFix = null; erro("erro-marcar","");
+  this.textContent = "GPS ligado — procurando…";
+  iniciarGPS(aoMarcarFix, e => {
+    erro("erro-marcar", msgErroGPS(e));
+    this.textContent = "Ligar GPS"; gpsMarcar = false;
+  });
+};
+$("btn-marcar").onclick = function(){
+  if(!ultimaFix){ toast("Ainda sem posicao"); return; }
+  const f = ultimaFix;
+  const rec = parseFloat($("m-reacao").value) || 0;
+  let lat = f.lat, lon = f.lon, corr = 0;
+  if(f.vel && f.rumo !== null && rec > 0){
+    corr = f.vel*rec;
+    [lat,lon] = recuar(f.lat, f.lon, f.rumo, corr);
+  }
+  const tipo = $("m-tipo").value;
+  const nome = ($("m-nome").value || "").trim() || (tipo+" sem nome");
+  pontos.push({
+    id: "p"+Date.now(), nome, tipo,
+    lat:+lat.toFixed(6), lon:+lon.toFixed(6),
+    prec: Math.round(f.prec || 0) || null,
+    corr: Math.round(corr), em: new Date().toISOString()
+  });
+  salvar();
+  $("m-nome").value = "";
+  if(NATIVO && Haptics) Haptics.vibrate({ duration: 40 }).catch(()=>{});
+  else if(navigator.vibrate) navigator.vibrate(45);
+  toast(corr ? "Marcado, recuado "+Math.round(corr)+" m" : "Marcado");
+};
+
+/* ---------- LISTA ---------- */
+function desenharLista(){
+  const ul = $("lista"); ul.innerHTML = "";
+  $("contador").textContent = pontos.length + (pontos.length===1?" ponto":" pontos");
+  $("vazio").style.display = pontos.length ? "none" : "block";
+  pontos.forEach(p => {
+    const li = document.createElement("li");
+    const t = document.createElement("span"); t.className="tipo"; t.textContent = p.tipo.slice(0,3);
+    const n = document.createElement("div"); n.className="nome";
+    n.append(document.createTextNode(p.nome));
+    const em = document.createElement("em");
+    em.textContent = p.lat.toFixed(5)+", "+p.lon.toFixed(5) + (p.corr ? "  ·  recuo "+p.corr+" m" : "");
+    n.append(em);
+    const b = document.createElement("button");
+    b.className="del"; b.textContent="×"; b.setAttribute("aria-label","Apagar "+p.nome);
+    b.onclick = () => {
+      if(!confirm("Apagar "+p.nome+"?")) return;
+      pontos = pontos.filter(x => x.id !== p.id); salvar();
+    };
+    li.append(t,n,b); ul.append(li);
+  });
+}
+
+async function importarTrajeto(silencioso){
+  try{
+    const r = await fetch("trajeto.json", { cache:"no-cache" });
+    if(!r.ok) throw 0;
+    const doc = await r.json();
+    const novos = Array.isArray(doc) ? doc : (doc.pontos || []);
+    const ids = new Set(pontos.map(p => p.id));
+    let n = 0;
+    for(const p of novos){
+      if(p && typeof p.lat === "number" && typeof p.lon === "number" && p.id && !ids.has(p.id)){
+        pontos.push({
+          id: p.id, nome: p.nome || (p.tipo || "Ponto"), tipo: p.tipo || "Igreja",
+          lat: p.lat, lon: p.lon, prec: p.prec || null,
+          corr: p.corr || 0, em: p.em || new Date().toISOString()
+        });
+        ids.add(p.id); n++;
+      }
+    }
+    if(n) salvar();
+    if(!silencioso) toast(n ? n + " ponto(s) do trajeto adicionados" : "O trajeto ja esta carregado");
+    return n;
+  }catch(e){
+    if(!silencioso) toast("Nao consegui carregar o trajeto");
+    return 0;
+  }
+}
+$("btn-trajeto").onclick = async function(){
+  this.disabled = true;
+  try{ await importarTrajeto(false); }
+  finally{ this.disabled = false; }
+};
+$("btn-exportar").onclick = async () => {
+  if(!pontos.length){ toast("Nao ha pontos para enviar"); return; }
+  const txt = JSON.stringify(pontos);
+  try{ await navigator.clipboard.writeText(txt); toast("Copiado — cole no WhatsApp"); }
+  catch(e){ prompt("Copie este texto e envie:", txt); }
+};
+$("btn-importar").onclick = () => {
+  const txt = prompt("Cole aqui os pontos recebidos:");
+  if(!txt) return;
+  try{
+    const novos = JSON.parse(txt);
+    if(!Array.isArray(novos)) throw 0;
+    const ids = new Set(pontos.map(p=>p.id));
+    let n = 0;
+    for(const p of novos){
+      if(p && p.lat && p.lon && !ids.has(p.id)){ pontos.push(p); n++; }
+    }
+    salvar();
+    toast(n ? n+" ponto(s) adicionado(s)" : "Nenhum ponto novo");
+  }catch(e){ toast("Texto invalido"); }
+};
+
+/* ---------- abas ---------- */
+const abas = [["tab-vigiar","p-vigiar"],["tab-marcar","p-marcar"],["tab-lista","p-lista"]];
+abas.forEach(([bt,pn]) => {
+  $(bt).onclick = () => {
+    abas.forEach(([b,p]) => {
+      $(b).setAttribute("aria-selected", b===bt ? "true":"false");
+      $(p).classList.toggle("on", p===pn);
+    });
+    if(pn !== "p-marcar" && gpsMarcar && !modoVigia){ pararGPS(); gpsMarcar = false; $("btn-gps").textContent = "Ligar GPS"; }
+  };
+});
+
+/* ---------- nota da tela Vigiar conforme o ambiente ---------- */
+if(NATIVO){
+  $("nota-vigiar").innerHTML = "O aviso soa com antecedência calculada pela sua velocidade. Como app, o GPS continua rodando com a tela <b>bloqueada</b> e o alerta chega como notificação — mantenha a permissão de localização em “Sempre”.";
+}else{
+  $("nota-vigiar").innerHTML = "O aviso soa com antecedência calculada pela sua velocidade. Nesta versão web a tela precisa ficar ligada; com o celular <b>bloqueado</b> o navegador para o GPS.";
+}
+
+/* ---------- inicio ---------- */
+carregar();
+if(NATIVO && pontos.length === 0){
+  importarTrajeto(true).then(n => { if(n) toast(n + " pontos do trajeto carregados"); });
+}
+</script>
+</body>
+</html>

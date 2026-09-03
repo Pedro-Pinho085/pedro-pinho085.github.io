@@ -1,0 +1,14 @@
+{
+  "appId": "com.pedropinho.sinaldacruz",
+  "appName": "Sinal da Cruz",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#0E2440"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "iconColor": "#C9A227"
+    }
+  }
+}
