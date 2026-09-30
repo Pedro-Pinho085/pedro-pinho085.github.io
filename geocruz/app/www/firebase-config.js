@@ -3,11 +3,11 @@
    Preencha depois de criar o projeto gratuito em console.firebase.google.com
    (veja README.md > "Conectar ao banco de dados"). Enquanto tiver
    "COLOQUE_AQUI", o app funciona normal, so sem sincronizar entre celulares. */
-export const firebaseConfig = {
-  apiKey: "COLOQUE_AQUI",
-  authDomain: "COLOQUE_AQUI.firebaseapp.com",
-  projectId: "COLOQUE_AQUI",
-  storageBucket: "COLOQUE_AQUI.appspot.com",
-  messagingSenderId: "COLOQUE_AQUI",
-  appId: "COLOQUE_AQUI"
+const firebaseConfig = {
+  apiKey: "AIzaSyAHDCG6C-D-ItlNNxGp5Dg_8IzuDEtSBro",
+  authDomain: "sinal-da-cruz.firebaseapp.com",
+  projectId: "sinal-da-cruz",
+  storageBucket: "sinal-da-cruz.firebasestorage.app",
+  messagingSenderId: "492143982992",
+  appId: "1:492143982992:web:254be75999af964cc15b15"
 };
