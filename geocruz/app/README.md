@@ -10,6 +10,11 @@ consegue fazer:
 A mesma `www/index.html` roda como página web comum — o código detecta se está
 dentro do app (`window.Capacitor`) e troca o motor de GPS / notificação.
 
+Também sincroniza os pontos entre celulares via Firestore, do mesmo jeito que
+a versão web — configure `www/firebase-config.js` seguindo o
+[README principal](../README.md#conectar-ao-banco-de-dados-firestore) (é a
+mesma chave nos dois lugares).
+
 ---
 
 ## O que você precisa (não tem como fugir disso)

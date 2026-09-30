@@ -1,11 +1,12 @@
 /* Sinal da Cruz - service worker
    Cache do "app shell" para abrir offline dentro do onibus. */
-const CACHE = "sinaldacruz-v3";
+const CACHE = "sinaldacruz-v4";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./trajeto.json",
+  "./firebase-config.js",
   "./icon-192.png",
   "./icon-512.png",
   "./apple-touch-icon.png",

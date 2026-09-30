@@ -298,6 +298,67 @@ function salvar(){
   catch(e){ toast("Nao deu para salvar neste aparelho"); }
 }
 
+/* ---------- banco de dados (Firestore, opcional) ----------
+   Sem internet ou sem configurar firebase-config.js o app funciona igual,
+   100% local. Com o Firebase configurado, os pontos passam a ser
+   compartilhados entre qualquer celular que abrir o app. */
+let fbDb = null, fbOk = false, fbApi = null;
+
+async function iniciarNuvem(){
+  try{
+    const { firebaseConfig } = await import("./firebase-config.js");
+    if(!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey.includes("COLOQUE_AQUI")) return;
+
+    const [{ initializeApp }, { getAuth, signInAnonymously, onAuthStateChanged },
+           { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot }] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js"),
+      import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js")
+    ]);
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    fbDb = getFirestore(app);
+    fbApi = { collection, doc, setDoc, deleteDoc, onSnapshot };
+
+    await new Promise(resolve => {
+      const parar = onAuthStateChanged(auth, user => { if(user){ parar(); resolve(); } });
+      signInAnonymously(auth).catch(() => resolve());
+    });
+    if(!auth.currentUser) return;
+
+    fbOk = true;
+    escutarNuvem();
+  }catch(e){
+    console.warn("Sem nuvem agora (offline ou nao configurado) - usando so localStorage.", e);
+  }
+}
+
+function escutarNuvem(){
+  const { collection, onSnapshot } = fbApi;
+  onSnapshot(collection(fbDb, "pontos"), snap => {
+    const nuvem = [];
+    snap.forEach(d => nuvem.push({ id: d.id, ...d.data() }));
+    const idsNuvem = new Set(nuvem.map(p => p.id));
+    // pontos marcados aqui que a nuvem ainda nao tem: mantem e tenta subir de novo
+    const pendentes = pontos.filter(p => !idsNuvem.has(p.id));
+    pontos = nuvem.concat(pendentes);
+    desenharLista();
+    try{ localStorage.setItem(CHAVE, JSON.stringify(pontos)); }catch(e){}
+    pendentes.forEach(enviarNuvem);
+  }, e => console.warn("sync da nuvem:", e));
+}
+async function enviarNuvem(ponto){
+  if(!fbOk) return;
+  try{ await fbApi.setDoc(fbApi.doc(fbDb, "pontos", String(ponto.id)), ponto); }
+  catch(e){ console.warn("nao consegui enviar pra nuvem:", e); }
+}
+async function apagarDaNuvem(id){
+  if(!fbOk) return;
+  try{ await fbApi.deleteDoc(fbApi.doc(fbDb, "pontos", String(id))); }
+  catch(e){ console.warn("nao consegui apagar da nuvem:", e); }
+}
+
 /* ---------- som e vibracao ---------- */
 function prepararAudio(){
   try{
@@ -484,13 +545,15 @@ $("btn-marcar").onclick = function(){
   }
   const tipo = $("m-tipo").value;
   const nome = ($("m-nome").value || "").trim() || (tipo+" sem nome");
-  pontos.push({
+  const novoPonto = {
     id: "p"+Date.now(), nome, tipo,
     lat:+lat.toFixed(6), lon:+lon.toFixed(6),
     prec: Math.round(f.prec || 0) || null,
     corr: Math.round(corr), em: new Date().toISOString()
-  });
+  };
+  pontos.push(novoPonto);
   salvar();
+  enviarNuvem(novoPonto);
   $("m-nome").value = "";
   if(navigator.vibrate) navigator.vibrate(45);
   toast(corr ? "Marcado, recuado "+Math.round(corr)+" m" : "Marcado");
@@ -515,6 +578,7 @@ function desenharLista(){
     b.onclick = () => {
       if(!confirm("Apagar "+p.nome+"?")) return;
       pontos = pontos.filter(x => x.id !== p.id); salvar();
+      apagarDaNuvem(p.id);
     };
     li.append(t,n,b); ul.append(li);
   });
@@ -544,6 +608,7 @@ $("btn-trajeto").onclick = async function(){
     }
     pontos = meus.concat(add);
     salvar();
+    add.forEach(enviarNuvem);
     toast(tinha ? "Trajeto atualizado (" + add.length + " pontos)" : add.length + " pontos do trajeto carregados");
   }catch(e){
     toast("Nao consegui carregar o trajeto");
@@ -562,12 +627,13 @@ $("btn-importar").onclick = () => {
     const novos = JSON.parse(txt);
     if(!Array.isArray(novos)) throw 0;
     const ids = new Set(pontos.map(p=>p.id));
-    let n = 0;
+    const add = [];
     for(const p of novos){
-      if(p && p.lat && p.lon && !ids.has(p.id)){ pontos.push(p); n++; }
+      if(p && p.lat && p.lon && !ids.has(p.id)){ pontos.push(p); add.push(p); }
     }
     salvar();
-    toast(n ? n+" ponto(s) adicionado(s)" : "Nenhum ponto novo");
+    add.forEach(enviarNuvem);
+    toast(add.length ? add.length+" ponto(s) adicionado(s)" : "Nenhum ponto novo");
   }catch(e){ toast("Texto invalido"); }
 };
 
@@ -593,6 +659,7 @@ if("serviceWorker" in navigator){
 }
 
 carregar();
+iniciarNuvem();
 </script>
 </body>
 </html>
